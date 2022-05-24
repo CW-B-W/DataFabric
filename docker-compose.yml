@@ -1,0 +1,53 @@
+version: "2"
+
+services:
+  flask:
+    image: datafabric-flask
+    build: ./web/flask
+    container_name: datafabric-flask
+    hostname: datafabric-flask
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.2
+    # depends_on:
+    env_file:
+      - ./web/flask/flask.env
+    ports:
+      - 5000:5000
+    volumes:
+      - ./web/flask/flask-share:/flask-share
+      - ./web/flask/hello.py:/hello.py
+      - ./web/flask/flask_config.json:/flask_config.json
+      - ./web/flask/static:/static
+      - ./web/flask/template:/template
+    mem_limit: 4096MB
+  
+  redis:
+    image: redis:7.0.0
+    container_name: datafabric-redis
+    hostname: datafabric-redis
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.3
+    mem_limit: 4096MB
+    volumes:
+      - ./web/flask/redis-share:/data
+
+  mysql:
+    image: mysql:8.0.29
+    container_name: datafabric-mysql
+    hostname: datafabric-mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: 00000000
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.4
+    volumes:
+      - ./web/flask/mysql-share:/var/lib/mysql
+    mem_limit: 4096MB
+
+networks:
+  datafabric_network:
+    external:
+      name: datafabric_network
