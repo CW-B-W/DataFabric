@@ -39,7 +39,7 @@ services:
     hostname: datafabric-mysql
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: 00000000
+      MYSQL_ROOT_PASSWORD: my-secret-pw
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.4
