@@ -74,16 +74,18 @@ function showSearchResults(results) {
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
         clon.find("[name=CatalogName]").eq(0).text(result['catalog_name']);
-        genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['table_members']);
+        genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['table_members'], result['table_id']);
         clon.find("[name=Description]").eq(0).text(result['description']);
         $("#SearchResults").append(clon);
     }
 }
 
-function genTablePreviewHref(tempElem, tableMembers) {
-    var parent = tempElem.parent();
+function genTablePreviewHref(tempElem, tableMembers, tableId) {
+    var parent  = tempElem.parent();
     var members = tableMembers.split(',');
+    var ids     = tableId.split(',');
     for (var i in members) {
+        var tableId    = ids[i];
         var tablePath  = members[i];
         var tableInfo  = tablePath.split('@');
         var tableDbms  = tableInfo[0];
@@ -91,7 +93,7 @@ function genTablePreviewHref(tempElem, tableMembers) {
         var tableTable = tableInfo[2];
         var clon = $(tempElem[0].cloneNode(true));
         clon.text(`[${tableDbms}]${tableTable}`);
-        clon.attr('href', `/preview?dbms=${tableDbms}&db=${tableDb}&table=${tableTable}`);
+        clon.attr('href', `/preview?tblid=${tableId}`);
         parent.append(clon);
     }
     tempElem.remove();

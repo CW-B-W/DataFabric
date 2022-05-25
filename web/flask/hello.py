@@ -50,10 +50,18 @@ def login():
             'username' : username,
             'password' : password,
             'db_account' : {
-                'mysql' : {
+                'mysql' : [{
+                    'ip'       : '127.0.0.1',
+                    'port'     : '3306',
                     'username' : 'root',
                     'password' : 'my-secret-pw'
-                }
+                },
+                {
+                    'ip'       : '192.168.103.52',
+                    'port'     : '3306',
+                    'username' : 'brad',
+                    'password' : '00000000'
+                }]
             }
         }
 
@@ -98,6 +106,7 @@ def search():
             {
                 'catalog_name' : '期末考成績分析',
                 'table_members' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
+                'table_id' : '12,13,14',
                 'description' : '歷年期末考成績分析',
                 'view_count' : '36',
                 'used_count' : '27',
@@ -106,6 +115,7 @@ def search():
             {
                 'catalog_name' : '成績性向分析',
                 'table_members' : 'MySQL@ExamScore@Final2020,MongoDB@StudentData@StudentPreferences',
+                'table_id' : '13,121',
                 'description' : '分析學生成績與性向關係',
                 'view_count' : '10',
                 'used_count' : '3',
@@ -122,6 +132,7 @@ def recommend():
             {
                 'catalog_name' : 'Recommend1: 期末考成績分析',
                 'table_members' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
+                'table_id' : '12,13,14',
                 'description' : '歷年期末考成績分析',
                 'view_count' : '36',
                 'used_count' : '27',
@@ -129,7 +140,8 @@ def recommend():
             },
             {
                 'catalog_name' : 'Recommend2: 成績性向分析',
-                'table_members' : 'MySQL@ExamScore@Final2020,MongoDB@StudentData@StudentPreferences',
+                'table_members' : 'MySQL@ExamScore@Final2021,MongoDB@StudentData@StudentPreferences',
+                'table_id' : '13,121',
                 'description' : '分析學生成績與性向關係',
                 'view_count' : '10',
                 'used_count' : '3',
