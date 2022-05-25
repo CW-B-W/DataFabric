@@ -8,45 +8,33 @@
   <link href='{{ url_for('static', filename="css/bootstrap-datetimepicker.min.css") }}' rel="stylesheet" media="screen">
   <script src='{{ url_for('static', filename="js/bootstrap-datetimepicker.js") }}' charset="UTF-8"></script>
 
-  <script src='{{ url_for('static', filename="js/mainpage.js") }}' charset="UTF-8"></script>
+  <script src='{{ url_for('static', filename="js/login.js") }}' charset="UTF-8"></script>
 
   <style>
     body {
       padding-top: 6%;
       padding-left: 6%;
+      padding-right: 6%;
     }
   </style>
 </head>
 
 <body>
-<!-- Obsoleted -->
-  <!-- Tabs -->
-  <!-- <ul id="myTab" class="nav nav-tabs w-100 mb-3">
-    <li class="nav-item ml-5"><a href="#SearchPage" data-toggle="tab">New Task</a></li>
-  </ul>
-
-  <div id="myTabContent" class="tab-content w-100 mt-3">
-    
-  </div> -->
-<!-- Obsoleted -->
-
-<!-- Search Bar -->
-  <div class="container">
-    <div class="row">
-      <nav class="navbar navbar-light bg-light">
-        <form class="form-inline">
-          <input id="search_bar" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form>
-      </nav>
+  <form method="POST" action="/login">
+    <!-- Email input -->
+    <div class="form-outline mb-4">
+      <input type="text" id="form2Example1" class="form-control" name="username" />
+      <label class="form-label" for="form2Example1">Username</label>
     </div>
-    <br>
-    <div class="row">
-      <h1>Recommendations</h1>
+  
+    <!-- Password input -->
+    <div class="form-outline mb-4">
+      <input type="password" id="form2Example2" class="form-control" name="password" />
+      <label class="form-label" for="form2Example2">Password</label>
     </div>
-  </div>
-<!-- Search Bar -->
   
-  
+    <!-- Submit button -->
+    <button type="submit" class="btn btn-primary btn-block mb-4">Sign in</button>
+  </form>
 </body>
 </html>
