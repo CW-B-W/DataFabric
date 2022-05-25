@@ -12,7 +12,7 @@
 
   <script>
     /* These variables can be seen by js */
-    flaskConfig = {{flaskConfig | tojson}}
+    flask_config = {{flask_config | tojson}}
   </script>
 
   <style>
@@ -25,40 +25,6 @@
 </head>
 
 <body>
-<!-- Search Bar -->
-  <div class="container">
-    <div class="row">
-      <nav class="navbar navbar-light bg-light">
-        <form class="form-inline">
-          <input id="SearchInput" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-          <button id="SearchButton" class="btn btn-outline-success my-2 my-sm-0" type="button">Search</button>
-        </form>
-      </nav>
-    </div>
-    <br>
-  </div>
-<!-- Search Bar -->
-
-<!-- Search Results -->
-  <template id="ResultItemTemplate">
-    <div class="container border border-success">
-        <div name="Item" class="container">
-          <div class="row">
-            <h3 name="CatalogName">CatalogName</h3>
-          </div>
-          <div class="row">
-            <a href="javascript:void(0);" name="TableMembers" style="padding-right: 8px">Tables</a>
-          </div>
-          <div class="row">
-            <h6 name="Description">Description</h6>
-          </div>
-        </div>
-    </div>
-    <br>
-  </template>
-  <div id="SearchResults">
-  </div>
-<!-- Search Results -->
-
+    <h1>Catalog</h1>
 </body>
 </html>

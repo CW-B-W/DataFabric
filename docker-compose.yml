@@ -20,6 +20,7 @@ services:
       - ./web/flask/flask_config.json:/flask_config.json
       - ./web/flask/static:/static
       - ./web/flask/template:/template
+      - ./DBMSAccessor:/DBMSAccessor
     mem_limit: 4096MB
   
   redis:
