@@ -45,7 +45,7 @@ def login():
             return True
         else:
             return False
-    def get_user_info():
+    def get_user_info(username):
         return {
             'username' : username,
             'password' : password,

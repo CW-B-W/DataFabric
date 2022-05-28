@@ -29,8 +29,13 @@ function view_docker_logs() {
     docker logs $1 -f
 }
 
+function mysql_cli() {
+    docker exec -it datafabric-mysql mysql -p
+}
+
 function print_help() {
     echo -e "Usage example:"
+    echo -e "\t./datafabric.sh help"
     echo -e "\t./datafabric.sh start"
     echo -e "\t./datafabric.sh stop"
     echo -e "\t./datafabric.sh restart"
@@ -38,6 +43,7 @@ function print_help() {
     echo -e "\t./datafabric.sh build-log"
     echo -e "\t./datafabric.sh bash datafabric-flask"
     echo -e "\t./datafabric.sh logs datafabric-flask"
+    echo -e "\t./datafabric.sh mysql"
 }
 
 if [[ "$1" == "help" ]]; then
@@ -57,6 +63,8 @@ elif [[ "$1" == "bash" ]]; then
     enter_docker_bash $2
 elif [[ "$1" == "logs" ]]; then
     view_docker_logs $2
+elif [[ "$1" == "mysql" ]]; then
+    mysql_cli
 else
     print_help
 fi
