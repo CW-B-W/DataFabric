@@ -19,6 +19,50 @@ app.config.from_object(Config())
 CORS(app)
 ''' ================ Flask Init ================ '''
 
+
+''' ================ MySQL Init ================ '''
+import pymysql
+mysql_settings = {
+    "host": "datafabric-mysql",
+    "port": 3306,
+    "user": "root",
+    "password": "my-secret-pw",
+    "db": "datafabric",
+    "charset": "utf8"
+}
+mysql_db = None
+def connect_mysql(retry=3):
+    global mysql_db
+    if not mysql_db is None:
+        return True
+    while retry >= 0:
+        try:
+            mysql_db = pymysql.connect(**mysql_settings)
+            return True
+        except Exception as ex:
+            print(ex)
+            retry -= 1
+    return False
+''' ================ MySQL Init ================ '''
+
+
+''' ================ Redis Init ================ '''
+import redis
+redis_db = None
+def connect_redis(retry=3):
+    global redis_db
+    if not redis_db is None:
+        return True
+    while retry >= 0:
+        try:
+            redis_db = redis.Redis(host='datafabric-redis', port=6379, db=0)
+            return True
+        except Exception as ex:
+            print(ex)
+            retry -= 1
+    return False
+''' ================ Redis Init ================ '''
+
 def validate_user():
     if 'user_info' in session:
         return True
@@ -96,32 +140,32 @@ def searchhints():
 
 @app.route('/search')
 def search():
+    global mysql_db
+    global redis_db
+
     if not validate_user():
         return redirect(url_for('login'))
 
     try:
         page        = request.args.get('page', default=1, type=int)
-        search_text = request.args.get('text')
-        return json.dumps([
-            {
-                'catalog_name' : '期末考成績分析',
-                'table_members' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
-                'table_id' : '12,13,14',
-                'description' : '歷年期末考成績分析',
-                'view_count' : '36',
-                'used_count' : '27',
-                'popular_columns' : 'MySQL@ExamScore@Final2020@EnglishExamScore,MySQL@ExamScore@Final2020@ChineseExamScore,MySQL@ExamScore@Final2020@MathExamScore'
-            },
-            {
-                'catalog_name' : '成績性向分析',
-                'table_members' : 'MySQL@ExamScore@Final2020,MongoDB@StudentData@StudentPreferences',
-                'table_id' : '13,121',
-                'description' : '分析學生成績與性向關係',
-                'view_count' : '10',
-                'used_count' : '3',
-                'popular_columns' : 'MongoDB@StudentData@StudentPreferences@Computer,MySQL@ExamScore@Final2020@MathExamScore'
-            }
-        ])
+        search_text = request.args.get('text', default='', type=str)
+        if search_text == '':
+            return json.dumps([])
+
+        query_id = f"user={session['user_info']['username']}&search={search_text}"
+        if connect_redis() == True:
+            if redis_db.exists(query_id):
+                result = json.loads(redis_db.get(query_id).decode('utf-8'))
+            else:
+                if connect_mysql() == False:
+                    raise "Failed to connect MySQL"
+                cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
+                cursor.execute(f"SELECT * FROM CatalogManager WHERE ColumnMembers LIKE '%{search_text}%' LIMIT 50;")
+                result = cursor.fetchall()
+                redis_db.set(query_id, json.dumps(result))
+        
+        result_page = result[(page-1)*10:page*10]
+        return json.dumps(result_page)
     except Exception as e:
         return str(e)
 
@@ -130,22 +174,22 @@ def recommend():
     try:
         return json.dumps([
             {
-                'catalog_name' : 'Recommend1: 期末考成績分析',
-                'table_members' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
-                'table_id' : '12,13,14',
-                'description' : '歷年期末考成績分析',
-                'view_count' : '36',
-                'used_count' : '27',
-                'popular_columns' : 'MySQL@ExamScore@Final2020@EnglishExamScore,MySQL@ExamScore@Final2020@ChineseExamScore,MySQL@ExamScore@Final2020@MathExamScore'
+                'CatalogName' : 'Recommend1: 期末考成績分析',
+                'TableMembers' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
+                'TableIds' : '12,13,14',
+                'Descriptions' : '歷年期末考成績分析',
+                'ViewCount' : '36',
+                'UsedCount' : '27',
+                'PopularTop3' : 'MySQL@ExamScore@Final2020@EnglishExamScore,MySQL@ExamScore@Final2020@ChineseExamScore,MySQL@ExamScore@Final2020@MathExamScore'
             },
             {
-                'catalog_name' : 'Recommend2: 成績性向分析',
-                'table_members' : 'MySQL@ExamScore@Final2021,MongoDB@StudentData@StudentPreferences',
-                'table_id' : '13,121',
-                'description' : '分析學生成績與性向關係',
-                'view_count' : '10',
-                'used_count' : '3',
-                'popular_columns' : 'MongoDB@StudentData@StudentPreferences@Computer,MySQL@ExamScore@Final2020@MathExamScore'
+                'CatalogName' : 'Recommend2: 成績性向分析',
+                'TableMembers' : 'MySQL@ExamScore@Final2021,MongoDB@StudentData@StudentPreferences',
+                'TableIds' : '13,121',
+                'Descriptions' : '分析學生成績與性向關係',
+                'ViewCount' : '10',
+                'UsedCount' : '3',
+                'PopularTop3' : 'MongoDB@StudentData@StudentPreferences@Computer,MySQL@ExamScore@Final2020@MathExamScore'
             }
         ])
     except Exception as e:
@@ -162,5 +206,17 @@ def table_preview():
         db    = request.args.get('db')
         table = request.args.get('table')
         return DBMSAccessor.hello()
+    except Exception as e:
+        return str(e)
+
+@app.route('/mysql_test')
+def mysql_test():
+    try:
+        if connect_mysql() == False:
+            raise "Failed to connect MySQL."
+        cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM CatalogManager;")
+        result = cursor.fetchall()
+        return json.dumps(result)
     except Exception as e:
         return str(e)

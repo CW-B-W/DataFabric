@@ -73,17 +73,17 @@ function showSearchResults(results) {
         var result = results[i];
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
-        clon.find("[name=CatalogName]").eq(0).text(result['catalog_name']);
-        genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['table_members'], result['table_id']);
-        clon.find("[name=Description]").eq(0).text(result['description']);
+        clon.find("[name=CatalogName]").eq(0).text(result['CatalogName']);
+        genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['TableMembers'], result['TableIds']);
+        clon.find("[name=Description]").eq(0).text(result['Description']);
         $("#SearchResults").append(clon);
     }
 }
 
-function genTablePreviewHref(tempElem, tableMembers, tableId) {
+function genTablePreviewHref(tempElem, tableMembers, tableIds) {
     var parent  = tempElem.parent();
     var members = tableMembers.split(',');
-    var ids     = tableId.split(',');
+    var ids     = tableIds.split(',');
     for (var i in members) {
         var tableId    = ids[i];
         var tablePath  = members[i];

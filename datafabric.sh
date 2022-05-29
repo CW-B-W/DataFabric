@@ -29,8 +29,12 @@ function view_docker_logs() {
     docker logs $1 -f
 }
 
+function flask_cli() {
+    docker exec -it datafabric-flask /bin/bash
+}
+
 function mysql_cli() {
-    docker exec -it datafabric-mysql mysql -p
+    docker exec -it datafabric-mysql mysql --password=my-secret-pw
 }
 
 function print_help() {
@@ -65,6 +69,8 @@ elif [[ "$1" == "logs" ]]; then
     view_docker_logs $2
 elif [[ "$1" == "mysql" ]]; then
     mysql_cli
+elif [[ "$1" == "flask-cli" ]]; then
+    flask_cli
 else
     print_help
 fi
