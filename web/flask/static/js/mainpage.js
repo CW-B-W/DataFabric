@@ -93,8 +93,74 @@ function genTablePreviewHref(tempElem, tableMembers, tableIds) {
         var tableTable = tableInfo[2];
         var clon = $(tempElem[0].cloneNode(true));
         clon.text(`[${tableDbms}]${tableTable}`);
-        clon.attr('href', `/preview?table_id=${tableId}`);
+        // clon.attr('href', `/preview?table_id=${tableId}`);
+        clon.attr('href', 'javascript: $( "#TablePreview" ).dialog();');
+        clon.attr('href', `javascript: showTablePreview(${tableId});`);
         parent.append(clon);
     }
     tempElem.remove();
+}
+
+function showTablePreview(tableId) {
+    $.ajax({
+        "type": "GET",
+        "dataType": "json",
+        "contentType": "application/json",
+        "url": `/table_preview?table_id=${tableId}`,
+        "timeout": 60000,
+        success: function(result) {
+            var tableContent = result;
+            var table = $('#TablePreview');
+            setTableContent(table, tableContent);
+            $('#TablePreviewDialog').dialog();
+        },
+        error: function(jqXHR, JQueryXHR, textStatus) {
+            console.warn("[querySearch] Connection Failed!");
+        }
+    });
+}
+
+function setTableContent(table, tableContent) {
+    table.html("");
+    if (tableContent.length == 0) {
+        return;
+    }
+    
+    var thead = $(document.createElement("thead"));
+    var tbody = $(document.createElement("tbody"));
+
+    // construct thead
+    {
+        let tr = $(document.createElement('tr'));
+        thead.append(tr);
+        let columnNames = Object.keys(tableContent[0]);
+        columnNames.unshift('#');
+        for (let i in columnNames) {
+            let columnName = columnNames[i];
+            let th = $(document.createElement('th'));
+            tr.append(th);
+            th.attr('scope', 'col');
+            th.text(columnName);
+        }
+    }
+    // construct tbody
+    {
+        for (let r = 0; r < tableContent.length; ++r) {
+            let tr = $(document.createElement('tr'));
+            tbody.append(tr);
+            let th = $(document.createElement('th'));
+            tr.append(th);
+            th.attr('scope', 'row');
+            th.text((r+1).toString());
+            for (let c in tableContent[r]) {
+                let columnVal = tableContent[r][c];
+                let td = $(document.createElement('td'));
+                tr.append(td);
+                td.text(columnVal);
+            }
+        }
+    }
+
+    table.append(thead);
+    table.append(tbody);
 }
