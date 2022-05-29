@@ -3,22 +3,31 @@ from sqlalchemy import create_engine
 def hello():
     return 'hello'
 
-def get_table_info(tableid):
-    return {
-        'ip'    : '192.168.103.52',
-        'port'  : '3306',
-        'dbms'  : 'MySQL',
-        'db'    : 'ExamScore',
-        'table' : 'Final2020'
-    }
 
-def preview_mysql(tableid, username, password, limit=5):
-    table_info = get_table_info(tableid)
-    ip_port    = f"{table_info['ip']}:{table_info['port']}"
-    dbms       = f"{table_info['dbms']}"
-    db         = f"{table_info['db']}"
-    table      = f"{table_info['table']}"
-    
-    db_engine = create_engine("mysql+pymysql://%s:%s@%s/" % (username, password, ip_port))
-    query     = f'SELECT * FROM {table} LIMIT {limit}'
-    return {}
+
+def preview_table(
+    username: str, password: str, 
+    ip: str, port: str, dbms: str, 
+    db: str, table: str, limit: int = 5
+) -> dict:
+    dbms = dbms.lower()
+    # Use reflection to call function (Better extensibility for adding new DBMS)
+    # The target function name should be like such as 'preview_mysql(...)'
+    return globals()[f'preview_{dbms}'](username, password, ip, port, db, table, limit)
+
+import pymysql
+import sys
+def preview_mysql(username, password, ip, port, db, table, limit):
+    mysql_settings = {
+        "host": ip,
+        "port": int(port),
+        "user": username,
+        "password": password,
+        "db": db,
+        "charset": "utf8"
+    }
+    mysql_db = pymysql.connect(**mysql_settings)
+    cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute(f"SELECT * FROM {table} LIMIT {limit};")
+    result = cursor.fetchall()
+    return result

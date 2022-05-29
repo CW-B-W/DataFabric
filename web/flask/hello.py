@@ -94,18 +94,20 @@ def login():
             'username' : username,
             'password' : password,
             'db_account' : {
-                'mysql' : [{
-                    'ip'       : '127.0.0.1',
-                    'port'     : '3306',
-                    'username' : 'root',
-                    'password' : 'my-secret-pw'
-                },
-                {
-                    'ip'       : '192.168.103.52',
-                    'port'     : '3306',
-                    'username' : 'brad',
-                    'password' : '00000000'
-                }]
+                'mysql' : {
+                    'datafabric-mysql:3306' : {
+                        'ip'       : 'datafabric-mysql',
+                        'port'     : '3306',
+                        'username' : 'root',
+                        'password' : 'my-secret-pw'
+                    },
+                    '192.168.103.52:3306' : {
+                        'ip'       : '192.168.103.52',
+                        'port'     : '3306',
+                        'username' : 'brad',
+                        'password' : '00000000'
+                    }
+                }
             }
         }
 
@@ -160,7 +162,10 @@ def search():
                 if connect_mysql() == False:
                     raise "Failed to connect MySQL"
                 cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
-                cursor.execute(f"SELECT * FROM CatalogManager WHERE ColumnMembers LIKE '%{search_text}%' LIMIT 50;")
+                cursor.execute(
+                    f"SELECT * FROM CatalogManager "
+                    f"WHERE ColumnMembers LIKE '%{search_text}%' LIMIT 50;"
+                )
                 result = cursor.fetchall()
                 redis_db.set(query_id, json.dumps(result))
         
@@ -199,13 +204,35 @@ def recommend():
 def catalog():
     return ""
 
-@app.route('/preview')
+def get_table_info(tableid):
+    return {
+        'ip'    : 'datafabric-mysql',
+        'port'  : '3306',
+        'dbms'  : 'MySQL',
+        'db'    : 'datafabric',
+        'table' : 'CatalogManager'
+    }
+@app.route('/table_preview')
 def table_preview():
     try:
-        dbms  = request.args.get('dbms')
-        db    = request.args.get('db')
-        table = request.args.get('table')
-        return DBMSAccessor.hello()
+        limit     = request.args.get('limit', default=5, type=int)
+        table_id  = request.args.get('table_id')
+
+        table_info = get_table_info(table_id)
+        ip    = table_info['ip']
+        port  = table_info['port']
+        dbms  = table_info['dbms'].lower()
+        db    = table_info['db']
+        table = table_info['table']
+        conn_username = session['user_info']['db_account'][dbms][f'{ip}:{port}']['username']
+        conn_password = session['user_info']['db_account'][dbms][f'{ip}:{port}']['password']
+
+        result = DBMSAccessor.preview_table(
+            conn_username, conn_password,
+            ip, port, dbms, db, table, limit
+        )
+        print(result, file=sys.stderr)
+        return json.dumps(result)
     except Exception as e:
         return str(e)
 

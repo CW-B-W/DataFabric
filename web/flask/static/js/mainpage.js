@@ -93,7 +93,7 @@ function genTablePreviewHref(tempElem, tableMembers, tableIds) {
         var tableTable = tableInfo[2];
         var clon = $(tempElem[0].cloneNode(true));
         clon.text(`[${tableDbms}]${tableTable}`);
-        clon.attr('href', `/preview?tblid=${tableId}`);
+        clon.attr('href', `/preview?table_id=${tableId}`);
         parent.append(clon);
     }
     tempElem.remove();
