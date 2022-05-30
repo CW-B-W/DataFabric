@@ -43,6 +43,14 @@ def connect_mysql(retry=3):
             print(ex)
             retry -= 1
     return False
+
+def mysql_query(query):
+    if connect_mysql() == False:
+        raise "Failed to connect MySQL."
+    cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    return result
 ''' ================ MySQL Init ================ '''
 
 
@@ -71,10 +79,7 @@ def validate_user():
 
 @app.route('/')
 def index():
-    if validate_user():
-        print(f"[index] session['user_info'] = {json.dumps(session['user_info'])}", file=sys.stderr)
-    else:
-        print(f"[index] session['user_info'] not found, redirecting to login", file=sys.stderr)
+    if not validate_user():
         return redirect(url_for('login'))
 
     with open('./flask_config.json', 'r') as rf:
@@ -159,14 +164,10 @@ def search():
             if redis_db.exists(query_id):
                 result = json.loads(redis_db.get(query_id).decode('utf-8'))
             else:
-                if connect_mysql() == False:
-                    raise "Failed to connect MySQL"
-                cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
-                cursor.execute(
+                result = mysql_query(
                     f"SELECT * FROM CatalogManager "
-                    f"WHERE ColumnMembers LIKE '%{search_text}%' LIMIT 50;"
+                    f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT 50;"
                 )
-                result = cursor.fetchall()
                 redis_db.set(query_id, json.dumps(result))
         
         result_page = result[(page-1)*10:page*10]
@@ -205,13 +206,9 @@ def catalog():
     return ""
 
 def get_table_info(tableid):
-    return {
-        'ip'    : 'datafabric-mysql',
-        'port'  : '3306',
-        'dbms'  : 'MySQL',
-        'db'    : 'datafabric',
-        'table' : 'CatalogManager'
-    }
+    result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
+    return result[0]
+
 @app.route('/table_preview')
 def table_preview():
     try:
@@ -219,11 +216,10 @@ def table_preview():
         table_id  = request.args.get('table_id')
 
         table_info = get_table_info(table_id)
-        ip    = table_info['ip']
-        port  = table_info['port']
-        dbms  = table_info['dbms'].lower()
-        db    = table_info['db']
-        table = table_info['table']
+        ip, port   = table_info['Connection'].split(':')
+        dbms  = table_info['DBMS'].lower()
+        db    = table_info['DB']
+        table = table_info['TableName']
         conn_username = session['user_info']['db_account'][dbms][f'{ip}:{port}']['username']
         conn_password = session['user_info']['db_account'][dbms][f'{ip}:{port}']['password']
 
@@ -239,11 +235,7 @@ def table_preview():
 @app.route('/mysql_test')
 def mysql_test():
     try:
-        if connect_mysql() == False:
-            raise "Failed to connect MySQL."
-        cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT * FROM CatalogManager;")
-        result = cursor.fetchall()
+        result = mysql_query("SELECT * FROM CatalogManager;")
         return json.dumps(result)
     except Exception as e:
         return str(e)

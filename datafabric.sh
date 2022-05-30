@@ -37,6 +37,10 @@ function mysql_cli() {
     docker exec -it datafabric-mysql mysql --password=my-secret-pw
 }
 
+function generate_test_data() {
+    docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2
+}
+
 function print_help() {
     echo -e "Usage example:"
     echo -e "\t./datafabric.sh help"
@@ -48,6 +52,7 @@ function print_help() {
     echo -e "\t./datafabric.sh bash datafabric-flask"
     echo -e "\t./datafabric.sh logs datafabric-flask"
     echo -e "\t./datafabric.sh mysql"
+    echo -e "\t./datafabric.sh generate_testdata 1000 50"
 }
 
 if [[ "$1" == "help" ]]; then
@@ -71,6 +76,15 @@ elif [[ "$1" == "mysql" ]]; then
     mysql_cli
 elif [[ "$1" == "flask-cli" ]]; then
     flask_cli
+elif [[ "$1" == "generate_testdata" ]]; then
+    while true; do
+        read -p "This operation will overwrite all the tables in MySQL! [Y/n]" yn
+        case $yn in
+            [Yy]* ) generate_test_data ${2:-1000} ${3:-50}; break;;
+            [Nn]* ) exit;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
 else
     print_help
 fi

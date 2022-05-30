@@ -21,6 +21,7 @@ services:
       - ./web/flask/static:/static
       - ./web/flask/template:/template
       - ./DBMSAccessor:/DBMSAccessor
+      - ./test:/test
     mem_limit: 4096MB
   
   redis:
