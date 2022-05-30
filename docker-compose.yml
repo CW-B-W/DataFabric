@@ -46,7 +46,7 @@ services:
       datafabric_network:
         ipv4_address: 172.22.0.4
     volumes:
-      - ./web/flask/mysql-share:/var/lib/mysql
+      - ./web/flask/mysql-share/mysql-data:/var/lib/mysql
       - ./web/flask/mysql-share/conf:/etc/mysql/conf.d
     mem_limit: 4096MB
 

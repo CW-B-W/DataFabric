@@ -1,5 +1,6 @@
 # Quick Start
 ```bash
+sudo ./datafabric.sh build
 sudo ./datafabric.sh start
 sudo ./datafabric.sh generate_testdata
 ```
