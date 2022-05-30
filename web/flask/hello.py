@@ -94,7 +94,7 @@ def login():
             return True
         else:
             return False
-    def get_user_info(username):
+    def get_user_info(username, password):
         return {
             'username' : username,
             'password' : password,
@@ -124,7 +124,7 @@ def login():
             password = request.form.get('password')
 
             if validate_login(username, password):
-                session['user_info'] = get_user_info(username)
+                session['user_info'] = get_user_info(username, password)
                 return redirect(url_for('index'))
             else:
                 return "Login Failed!"
