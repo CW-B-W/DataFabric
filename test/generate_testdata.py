@@ -133,7 +133,7 @@ def create_table_info_table(table_info_list):
             cursor.execute(command)
             command = f"""
                 CREATE TABLE TableInfo (
-                    ID              INT PRIMARY KEY,
+                    ID              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     Connection      VARCHAR(100),
                     DBMS            VARCHAR(20),
                     DB              VARCHAR(100),
@@ -148,7 +148,7 @@ def create_table_info_table(table_info_list):
             with conn.cursor() as cursor:
                 command = f"""
                     INSERT INTO TableInfo VALUES (
-                        {table_info['ID']},
+                        NULL,
                         "{table_info['Connection']}",
                         "{table_info['DBMS']}",
                         "{table_info['DB']}",
@@ -179,6 +179,7 @@ def create_catalog_table(catalog_list):
             cursor.execute(command)
             command = f"""
                 CREATE TABLE CatalogManager (
+                    ID              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     CatalogName     VARCHAR(50),
                     TableMembers    TEXT,
                     TableIds        TEXT,
@@ -197,6 +198,7 @@ def create_catalog_table(catalog_list):
         with conn.cursor() as cursor:
             command = """
                 INSERT INTO CatalogManager VALUES (
+                    NULL,
                     "期末考成績分析",
                     "MySQL@ScoreDb@Final2020,MySQL@ScoreDb@Final2021",
                     "12,13",
@@ -216,6 +218,7 @@ def create_catalog_table(catalog_list):
             with conn.cursor() as cursor:
                 command = f"""
                     INSERT INTO CatalogManager VALUES (
+                        NULL,
                         "{catalog['CatalogName']}",
                         "{catalog['TableMembers']}",
                         "{catalog['TableIds']}",
@@ -276,18 +279,28 @@ def main():
     n_catalog = args.catalog
     random.seed(0)
 
+    print("Creating databases")
     create_databases()
+    print("Finished!")
+    
 
     table_info_list = []
+    print("Generating tables")
     for i in tqdm(range(n_table)):
         table_info_list.append(new_random_table_info())
         create_testdata_table_random(table_info_list[-1])
-    create_table_info_table(table_info_list)
+    print("Finished!")
 
+    print("Creating TableInfo table")
+    create_table_info_table(table_info_list)
+    print("Finished!")
+
+    print("Creating CatalogManager table")
     catalog_list = []
     for i in tqdm(range(n_catalog)):
         catalog_list.append(new_random_catalog(table_info_list))
     create_catalog_table(catalog_list)
+    print("Finished!")
 
 if __name__ == '__main__':
     main()

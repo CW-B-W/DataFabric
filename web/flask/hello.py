@@ -179,6 +179,7 @@ def recommend():
     try:
         return json.dumps([
             {
+                'ID' : '1',
                 'CatalogName' : 'Recommend1: 期末考成績分析',
                 'TableMembers' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
                 'TableIds' : '12,13,14',
@@ -188,6 +189,7 @@ def recommend():
                 'PopularTop3' : 'MySQL@ExamScore@Final2020@EnglishExamScore,MySQL@ExamScore@Final2020@ChineseExamScore,MySQL@ExamScore@Final2020@MathExamScore'
             },
             {
+                'ID' : '2',
                 'CatalogName' : 'Recommend2: 成績性向分析',
                 'TableMembers' : 'MySQL@ExamScore@Final2021,MongoDB@StudentData@StudentPreferences',
                 'TableIds' : '13,121',
@@ -202,7 +204,9 @@ def recommend():
 
 @app.route('/catalog')
 def catalog():
-    return ""
+    catalog_id  = request.args.get('catalog_id')
+    catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
+    return json.dumps(catalog)
 
 def get_table_info(tableid):
     result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
