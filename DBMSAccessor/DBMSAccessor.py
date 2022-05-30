@@ -1,10 +1,5 @@
 from sqlalchemy import create_engine
 
-def hello():
-    return 'hello'
-
-
-
 def preview_table(
     username: str, password: str, 
     ip: str, port: str, dbms: str, 
@@ -16,7 +11,6 @@ def preview_table(
     return globals()[f'preview_{dbms}'](username, password, ip, port, db, table, limit)
 
 import pymysql
-import sys
 def preview_mysql(username, password, ip, port, db, table, limit):
     mysql_settings = {
         "host": ip,

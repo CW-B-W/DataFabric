@@ -1,13 +1,28 @@
 $(document).ready(function (){
 
     $("#SearchInput").keypress(function(e) {
-        var text = $(this).val() + String.fromCharCode(e.which);
-        querySearchHints(text);
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == 13) {
+            e.preventDefault();
+            var text = $(this).val();
+            querySearch(text);
+        }
+        else {
+            var text = $(this).val() + String.fromCharCode(keyCode);
+            querySearchHints(text);
+        }
     });
 
     $("#SearchButton").click(function(e) {
         var searchText = $("#SearchInput").val();
         querySearch(searchText);
+    });
+
+    $("#NextPageButton").click(function(e) {
+        querySearch(currentSearch, currentPage+1);
+    });
+    $("#PrevPageButton").click(function(e) {
+        querySearch(currentSearch, currentPage-1);
     });
 
     queryRecommendations();
@@ -51,12 +66,17 @@ function showSearchHints(result) {
     });
 }
 
-function querySearch(text) {
+currentSearch = '';
+currentPage   = 0;
+function querySearch(text, page=1) {
+    if (text == '' || page < 1) {
+        return;
+    }
     $.ajax({
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/search?text=${text}`,
+        "url": `/search?text=${text}&page=${page}`,
         "timeout": 60000,
         success: function(result) {
             showSearchResults(result);
@@ -65,6 +85,8 @@ function querySearch(text) {
             console.warn("[querySearch] Connection Failed!");
         }
     });
+    currentSearch = text;
+    currentPage   = page;
 }
 
 function showSearchResults(results) {
@@ -78,6 +100,7 @@ function showSearchResults(results) {
         clon.find("[name=Description]").eq(0).text(result['Description']);
         $("#SearchResults").append(clon);
     }
+    $('#CurrentPageLabel').text(`Page: ${currentPage.toString()}`);
 }
 
 function genTablePreviewHref(tempElem, tableMembers, tableIds) {

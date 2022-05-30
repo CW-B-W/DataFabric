@@ -147,7 +147,6 @@ def searchhints():
 
 @app.route('/search')
 def search():
-    global mysql_db
     global redis_db
 
     if not validate_user():
@@ -155,22 +154,22 @@ def search():
 
     try:
         page        = request.args.get('page', default=1, type=int)
+        page_base   = int((page-1)/5)*5 # if page=1~5, page_base=0; page=6~10, page_base=5
         search_text = request.args.get('text', default='', type=str)
         if search_text == '':
             return json.dumps([])
 
-        query_id = f"user={session['user_info']['username']}&search={search_text}"
-        if connect_redis() == True:
-            if redis_db.exists(query_id):
-                result = json.loads(redis_db.get(query_id).decode('utf-8'))
-            else:
-                result = mysql_query(
-                    f"SELECT * FROM CatalogManager "
-                    f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT 50;"
-                )
-                redis_db.set(query_id, json.dumps(result))
+        query_id = f"user={session['user_info']['username']}&search={search_text}&page={page_base+1}~{page_base+5}"
+        if connect_redis() == True and redis_db.exists(query_id):
+            result = json.loads(redis_db.get(query_id).decode('utf-8'))
+        else:
+            result = mysql_query(
+                f"SELECT * FROM CatalogManager "
+                f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT {page_base*10},50;"
+            )
+            redis_db.set(query_id, json.dumps(result))
         
-        result_page = result[(page-1)*10:page*10]
+        result_page = result[10*(page-page_base-1):10*(page-page_base)]
         return json.dumps(result_page)
     except Exception as e:
         return str(e)
