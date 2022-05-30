@@ -2,6 +2,7 @@
 
 import json
 import sys, os, time
+import random
 
 from DBMSAccessor import DBMSAccessor
 
@@ -196,28 +197,18 @@ def recommend():
         return redirect(url_for('login'))
 
     try:
-        return json.dumps([
-            {
-                'ID' : '1',
-                'CatalogName' : 'Recommend1: 期末考成績分析',
-                'TableMembers' : 'MySQL@ExamScore@Final2020,MySQL@ExamScore@Final2021,MySQL@ExamScore@Final2022',
-                'TableIds' : '12,13,14',
-                'Descriptions' : '歷年期末考成績分析',
-                'ViewCount' : '36',
-                'UsedCount' : '27',
-                'PopularTop3' : 'MySQL@ExamScore@Final2020@EnglishExamScore,MySQL@ExamScore@Final2020@ChineseExamScore,MySQL@ExamScore@Final2020@MathExamScore'
-            },
-            {
-                'ID' : '2',
-                'CatalogName' : 'Recommend2: 成績性向分析',
-                'TableMembers' : 'MySQL@ExamScore@Final2021,MongoDB@StudentData@StudentPreferences',
-                'TableIds' : '13,121',
-                'Descriptions' : '分析學生成績與性向關係',
-                'ViewCount' : '10',
-                'UsedCount' : '3',
-                'PopularTop3' : 'MongoDB@StudentData@StudentPreferences@Computer,MySQL@ExamScore@Final2020@MathExamScore'
-            }
-        ])
+        query_id = f"user={session['user_info']['username']}&recommend=random"
+        if connect_redis() == True and redis_db.exists(query_id):
+            result = json.loads(redis_db.get(query_id).decode('utf-8'))
+        else:
+            result = mysql_query(
+                f"SELECT * FROM CatalogManager "
+                f"ORDER BY RAND() LIMIT 50;"
+            )
+            redis_db.set(query_id, json.dumps(result))
+
+        result = random.sample(result, 10)
+        return json.dumps(result)
     except Exception as e:
         return str(e), 500
 
@@ -226,12 +217,12 @@ def catalog():
     if not validate_user():
         return redirect(url_for('login'))
 
-    catalog_id  = request.args.get('catalog_id', type=int)
+    catalog_id = request.args.get('catalog_id', type=int)
     if not validate_permission({'action': 'catalog','catalog_id' : catalog_id}):
         return "Permission denied.", 403
 
     catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
-    return json.dumps(catalog)
+    return render_template('catalog.html', catalogId = catalog_id)
 
 def get_table_info(tableid: int) -> dict:
     result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
