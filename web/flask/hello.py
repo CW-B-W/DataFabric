@@ -31,7 +31,7 @@ mysql_settings = {
     "charset": "utf8"
 }
 mysql_db = None
-def connect_mysql(retry=3):
+def connect_mysql(retry=3) -> bool:
     global mysql_db
     if not mysql_db is None:
         return True
@@ -44,7 +44,7 @@ def connect_mysql(retry=3):
             retry -= 1
     return False
 
-def mysql_query(query):
+def mysql_query(query: str) -> bool:
     if connect_mysql() == False:
         raise "Failed to connect MySQL."
     cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
@@ -58,7 +58,7 @@ def mysql_query(query):
 ''' ================ Redis Init ================ '''
 import redis
 redis_db = None
-def connect_redis(retry=3):
+def connect_redis(retry=3) -> bool:
     global redis_db
     if not redis_db is None:
         return True
@@ -72,11 +72,26 @@ def connect_redis(retry=3):
     return False
 ''' ================ Redis Init ================ '''
 
-def validate_user():
+
+def validate_user() -> bool:
+    '''
+    To check whether user had login.
+    '''
     if 'user_info' in session:
         return True
     else:
         return False
+
+def validate_permission(action_info: dict) -> bool:
+    '''
+    To check whether user has the permission to access the requested data.
+    '''
+
+    # simple example of permission check
+    if session['user_info']['username'] == 'admin':
+        if action_info['action'] == 'catalog' and action_info['catalog_id'] <= 2:
+            return False
+    return True
 
 @app.route('/')
 def index():
@@ -130,21 +145,21 @@ def login():
             else:
                 return "Login Failed!"
     except Exception as e:
-        return str(e)
+        return str(e), 500
 
 @app.route('/searchhints')
 def searchhints():
-    try:
-        if not validate_user():
-            return redirect(url_for('login'))
+    if not validate_user():
+        return redirect(url_for('login'))
 
+    try:
         return json.dumps([
             'ChineseExamScore',
             'EnglishExamScore',
             'MathExamScore'
         ])
     except Exception as e:
-        return str(e)
+        return str(e), 500
 
 @app.route('/search')
 def search():
@@ -173,10 +188,13 @@ def search():
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
         return json.dumps(result_page)
     except Exception as e:
-        return str(e)
+        return str(e), 500
 
 @app.route('/recommend')
 def recommend():
+    if not validate_user():
+        return redirect(url_for('login'))
+
     try:
         return json.dumps([
             {
@@ -201,23 +219,34 @@ def recommend():
             }
         ])
     except Exception as e:
-        return str(e)
+        return str(e), 500
 
 @app.route('/catalog')
 def catalog():
-    catalog_id  = request.args.get('catalog_id')
+    if not validate_user():
+        return redirect(url_for('login'))
+
+    catalog_id  = request.args.get('catalog_id', type=int)
+    if not validate_permission({'action': 'catalog','catalog_id' : catalog_id}):
+        return "Permission denied.", 403
+
     catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
     return json.dumps(catalog)
 
-def get_table_info(tableid):
+def get_table_info(tableid: int) -> dict:
     result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
     return result[0]
 
 @app.route('/table_preview')
 def table_preview():
+    if not validate_user():
+        return redirect(url_for('login'))
+
     try:
         limit     = request.args.get('limit', default=5, type=int)
-        table_id  = request.args.get('table_id')
+        table_id  = request.args.get('table_id', type=int)
+        if not validate_permission({'action': 'table_preview','table_id' : table_id}):
+            return "Permission denied.", 403
 
         table_info = get_table_info(table_id)
         ip, port   = table_info['Connection'].split(':')
@@ -234,12 +263,4 @@ def table_preview():
         print(result, file=sys.stderr)
         return json.dumps(result)
     except Exception as e:
-        return str(e)
-
-@app.route('/mysql_test')
-def mysql_test():
-    try:
-        result = mysql_query("SELECT * FROM CatalogManager;")
-        return json.dumps(result)
-    except Exception as e:
-        return str(e)
+        return str(e), 500
