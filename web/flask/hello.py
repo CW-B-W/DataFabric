@@ -49,6 +49,7 @@ def mysql_query(query):
         raise "Failed to connect MySQL."
     cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
     cursor.execute(query)
+    mysql_db.commit()
     result = cursor.fetchall()
     return result
 ''' ================ MySQL Init ================ '''
