@@ -71,6 +71,15 @@ def connect_redis(retry=3) -> bool:
             print(ex)
             retry -= 1
     return False
+
+def redis_set_json(key: str, obj: dict) -> bool:
+    redis_db.set(key, json.dumps(obj))
+
+def redis_get_json(key: str) -> dict:
+    if connect_redis() == True and redis_db.exists(key):
+        return json.loads(redis_db.get(key).decode('utf-8'))
+    else:
+        return None
 ''' ================ Redis Init ================ '''
 
 
@@ -177,14 +186,13 @@ def search():
             return json.dumps([])
 
         query_id = f"user={session['user_info']['username']}&search={search_text}&page={page_base+1}~{page_base+5}"
-        if connect_redis() == True and redis_db.exists(query_id):
-            result = json.loads(redis_db.get(query_id).decode('utf-8'))
-        else:
+        result = redis_get_json(query_id)
+        if result is None:
             result = mysql_query(
                 f"SELECT * FROM CatalogManager "
                 f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT {page_base*10},50;"
             )
-            redis_db.set(query_id, json.dumps(result))
+            redis_set_json(query_id, result)
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
         return json.dumps(result_page)
@@ -198,14 +206,13 @@ def recommend():
 
     try:
         query_id = f"user={session['user_info']['username']}&recommend=random"
-        if connect_redis() == True and redis_db.exists(query_id):
-            result = json.loads(redis_db.get(query_id).decode('utf-8'))
-        else:
+        result = redis_get_json(query_id)
+        if result is None:
             result = mysql_query(
                 f"SELECT * FROM CatalogManager "
                 f"ORDER BY RAND() LIMIT 50;"
             )
-            redis_db.set(query_id, json.dumps(result))
+            redis_set_json(query_id, result)
 
         result = random.sample(result, 10)
         return json.dumps(result)
@@ -221,12 +228,27 @@ def catalog():
     if not validate_permission({'action': 'catalog','catalog_id' : catalog_id}):
         return "Permission denied.", 403
 
-    catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
     return render_template('catalog.html', catalogId = catalog_id)
 
 def get_table_info(tableid: int) -> dict:
     result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
     return result[0]
+
+@app.route('/get_catalog')
+def get_catalog():
+    if not validate_user():
+        return redirect(url_for('login'))
+
+    catalog_id = request.args.get('catalog_id', type=int)
+    if not validate_permission({'action': 'get_catalog','catalog_id' : catalog_id}):
+        return "Permission denied.", 403
+
+    query_id = f"catalog={catalog_id}"
+    catalog = redis_get_json(query_id)
+    if catalog is None:
+        catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
+        redis_set_json(query_id, catalog)
+    return json.dumps(catalog)
 
 @app.route('/table_preview')
 def table_preview():
