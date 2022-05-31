@@ -83,6 +83,41 @@ def redis_get_json(key: str) -> dict:
 ''' ================ Redis Init ================ '''
 
 
+''' ================ Mongo Init ================ '''
+import pymongo
+from bson import json_util
+mongo_client = None
+mongo_db     = None
+def connect_mongo(retry=3) -> bool:
+    global mongo_client
+    global mongo_db
+    if not mongo_client is None:
+        return True
+    while retry >= 0:
+        try:
+            mongo_client = pymongo.MongoClient(
+                    'mongodb://%s:%s@datafabric-mongo' % ('root', 'example'), 
+                    serverSelectionTimeoutMS=3000)
+            mongo_client.server_info()
+            mongo_db = mongo_client['datafabric']
+            return True
+        except Exception as ex:
+            print(ex)
+            retry -= 1
+    return False
+
+def mongo_query(collection_name: str, arg1: dict = {}, arg2: dict = {}) -> dict:
+    if connect_mongo() == False:
+        raise "Failed to connect MySQL."
+    collection = mongo_db[collection_name]
+    result = collection.find(arg1, arg2)
+    return result
+
+def parse_bson(data):
+    return json.loads(json_util.dumps(data))
+''' ================ Mongo Init ================ '''
+
+
 def validate_user() -> bool:
     '''
     To check whether user had login.
@@ -97,11 +132,30 @@ def validate_permission(action_info: dict) -> bool:
     To check whether user has the permission to access the requested data.
     '''
 
+    user_info = session['user_info']
     # simple example of permission check
-    if session['user_info']['username'] == 'admin':
-        if action_info['action'] == 'catalog' and action_info['catalog_id'] <= 2:
-            return False
-    return True
+    if action_info['action'] == 'catalog':
+        catalog_id = str(action_info['catalog_id'])
+        if user_info['permission']['catalog_id']['*'] == True:
+            return True
+        elif catalog_id in user_info['permission']['catalog_id']:
+            if user_info['permission']['catalog_id'][catalog_id] == True:
+                return True
+
+        return False
+    elif action_info['action'] == 'table_preview':
+        table_id = str(action_info['table_id'])
+        print(table_id, file=sys.stderr)
+        print(user_info['permission']['table_id'], file=sys.stderr)
+        if user_info['permission']['table_id']['*'] == True:
+            return True
+        elif table_id in user_info['permission']['table_id']:
+            if user_info['permission']['table_id'][table_id] == True:
+                return True
+
+        return False
+
+    return False
 
 @app.route('/')
 def index():
@@ -113,35 +167,18 @@ def index():
     return render_template('index.html', flaskConfig = flask_config)
 
 
+def get_user_info(username: str, password: str) -> dict:
+    try:
+        result = mongo_query('user_info', {"username": {"$eq": username}})
+        if result[0]['password'] == password:
+            return parse_bson(result[0]) # To make sure it's serializable
+        else:
+            return None
+    except Exception as e:
+        return None
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    def validate_login(username, password):
-        if username == 'admin' and password == 'admin':
-            return True
-        else:
-            return False
-    def get_user_info(username, password):
-        return {
-            'username' : username,
-            'password' : password,
-            'db_account' : {
-                'mysql' : {
-                    'datafabric-mysql:3306' : {
-                        'ip'       : 'datafabric-mysql',
-                        'port'     : '3306',
-                        'username' : 'root',
-                        'password' : 'my-secret-pw'
-                    },
-                    '192.168.103.52:3306' : {
-                        'ip'       : '192.168.103.52',
-                        'port'     : '3306',
-                        'username' : 'brad',
-                        'password' : '00000000'
-                    }
-                }
-            }
-        }
-
     try:
         if request.method == 'GET':
             return render_template('login.html')
@@ -149,8 +186,9 @@ def login():
             username = request.form.get('username')
             password = request.form.get('password')
 
-            if validate_login(username, password):
-                session['user_info'] = get_user_info(username, password)
+            user_info = get_user_info(username, password)
+            if user_info is not None:
+                session['user_info'] = user_info
                 return redirect(url_for('index'))
             else:
                 return "Login Failed!"

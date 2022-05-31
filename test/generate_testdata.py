@@ -1,5 +1,6 @@
 import random
 import pymysql
+import pymongo
 import argparse
 from tqdm import tqdm
 
@@ -268,16 +269,8 @@ def create_databases():
     except Exception as ex:
         print(ex)
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--table", help="Number of testdata tables", type=int)
-    parser.add_argument("-c", "--catalog", help="Number of catalogs", type=int)
-    args = parser.parse_args()
-
-    n_table   = args.table
-    n_catalog = args.catalog
-    random.seed(0)
+def generate_mysql(n_table, n_catalog):
+    print("[Generating MySQL testdata]")
 
     print("Creating databases")
     create_databases()
@@ -302,5 +295,111 @@ def main():
     create_catalog_table(catalog_list)
     print("Finished!")
 
+
+user_info_idx = 0
+def new_random_user_info():
+    global user_info_idx
+    user_info = {
+        'username' : f'user{user_info_idx}',
+        'password' : f'{user_info_idx}',
+        'db_account' : {
+            'mysql' : {
+                'datafabric-mysql:3306' : {
+                    'ip'       : 'datafabric-mysql',
+                    'port'     : '3306',
+                    'username' : 'root',
+                    'password' : 'my-secret-pw'
+                },
+                '192.168.103.52:3306' : {
+                    'ip'       : '192.168.103.52',
+                    'port'     : '3306',
+                    'username' : f'user{user_info_idx}',
+                    'password' : f'mypwd{user_info_idx}'
+                }
+            }
+        },
+        'permission': {
+            'catalog_id' : {
+                '*': False
+            },
+            'table_id' : {
+                '*': False
+            }
+        }
+    }
+    for i in range(user_info_idx):
+        user_info['permission']['catalog_id'][str(i)] = True
+        user_info['permission']['table_id'][str(i)] = True
+
+    user_info_idx += 1
+    return user_info
+
+def generate_mongo(n_user):
+    print("[Generating MongoDB testdata]")
+
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+
+    print("Creating databases")
+    myclient.drop_database('datafabric')
+    mydb = myclient['datafabric']
+    print("Finished!")
+    
+
+    user_info_list = []
+    print("Generating users")
+    mycol = mydb['user_info']
+    mycol.drop()
+    mycol = mydb['user_info']
+    user_info_list.append({
+        'username' : f'admin',
+        'password' : f'admin',
+        'db_account' : {
+            'mysql' : {
+                'datafabric-mysql:3306' : {
+                    'ip'       : 'datafabric-mysql',
+                    'port'     : '3306',
+                    'username' : 'root',
+                    'password' : 'my-secret-pw'
+                },
+                '192.168.103.52:3306' : {
+                    'ip'       : '192.168.103.52',
+                    'port'     : '3306',
+                    'username' : f'brad',
+                    'password' : f'00000000'
+                }
+            }
+        },
+        'permission': {
+            'catalog_id' : {
+                '*': True
+            },
+            'table_id' : {
+                '*': True
+            }
+        }
+    })
+    for i in tqdm(range(n_user)):
+        user_info_list.append(new_random_user_info())
+    x = mycol.insert_many(user_info_list)
+    print("Finished!")
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--table", help="Number of testdata tables", type=int)
+    parser.add_argument("-c", "--catalog", help="Number of catalogs", type=int)
+    parser.add_argument("-u", "--user", help="Number of users", type=int)
+    args = parser.parse_args()
+
+    n_table   = args.table
+    n_catalog = args.catalog
+    n_user    = args.user
+    random.seed(0)
+
+    if not (n_table is None or n_catalog is None):
+        generate_mysql(n_table, n_catalog)
+
+    if not (n_user is None):
+        generate_mongo(n_user)
+    
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@
 sudo ./datafabric.sh build
 sudo ./datafabric.sh start
 sudo docker exec -it datafabric-mysql mysql -p # login to activate MySQL. {assword: my-secret-pw
-sudo ./datafabric.sh generate_testdata 100 10  # 100 tables, 10 catalogs
+sudo ./datafabric.sh generate_testdata 100 10 10  # 100 tables, 10 catalogs, 10 users
 ```
 Then connect to `{your_ip}:5000/`,  
 default account is `admin/admin`
@@ -33,6 +33,10 @@ View the logs of container
 ```bash
 sudo ./datafabric.sh logs {container_name}
 ```
+Enter Flask CLI
+```bash
+sudo ./datafabric.sh flask-cli
+```
 Enter MySQL CLI
 ```bash
 # For the first time, you must activate the root account first
@@ -40,10 +44,15 @@ Enter MySQL CLI
 # password: my-secret-pw
 sudo ./datafabric.sh mysql
 ```
+Enter MongoDB CLI
+```bash
+sudo ./datafabric.sh mongo
+```
 Generate testdata
 ```bash
-sudo ./datafabric.sh generate_testdata {n_table} {n_catalog}
+sudo ./datafabric.sh generate_testdata {n_table} {n_catalog} {n_user}
 
 # n_table: The number of test tables (Default: 1000)
 # n_catalog: The number of test catalogs (Default: 50)
+# n_catalog: The number of test users (Default: 100)
 ```
