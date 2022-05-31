@@ -37,8 +37,17 @@ function mysql_cli() {
     docker exec -it datafabric-mysql mysql --password=my-secret-pw
 }
 
+function mongo_cli() {
+    docker exec -it datafabric-mongo mongosh --username=root --password=example
+}
+
 function generate_test_data() {
     docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2
+}
+
+function restart_flask() {
+    docker-compose stop -t 300 flask
+    docker-compose up -d flask
 }
 
 function print_help() {
@@ -52,6 +61,7 @@ function print_help() {
     echo -e "\t./datafabric.sh bash datafabric-flask"
     echo -e "\t./datafabric.sh logs datafabric-flask"
     echo -e "\t./datafabric.sh mysql"
+    echo -e "\t./datafabric.sh mongo"
     echo -e "\t./datafabric.sh generate_testdata 1000 50"
 }
 
@@ -74,6 +84,8 @@ elif [[ "$1" == "logs" ]]; then
     view_docker_logs $2
 elif [[ "$1" == "mysql" ]]; then
     mysql_cli
+elif [[ "$1" == "mongo" ]]; then
+    mongo_cli
 elif [[ "$1" == "flask-cli" ]]; then
     flask_cli
 elif [[ "$1" == "generate_testdata" ]]; then
@@ -85,6 +97,8 @@ elif [[ "$1" == "generate_testdata" ]]; then
             * ) echo "Please answer yes or no.";;
         esac
     done
+elif [[ "$1" == "restart-flask" ]]; then
+    restart_flask
 else
     print_help
 fi

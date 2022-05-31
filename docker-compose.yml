@@ -50,6 +50,21 @@ services:
       - ./web/flask/mysql-share/conf:/etc/mysql/conf.d
     mem_limit: 4096MB
 
+  mongo:
+    image: mongo:5.0.8
+    container_name: datafabric-mongo
+    hostname: datafabric-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.5
+    volumes:
+      - ./web/flask/mongo-share/mongo-data:/data/db
+      - ./web/flask/mongo-share/conf:/data/configdb
+    mem_limit: 4096MB
+
 networks:
   datafabric_network:
     external:
