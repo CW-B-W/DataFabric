@@ -72,8 +72,10 @@ def connect_redis(retry=3) -> bool:
             retry -= 1
     return False
 
-def redis_set_json(key: str, obj: dict) -> bool:
+def redis_set_json(key: str, obj: dict, expire: int = None) -> bool:
     redis_db.set(key, json.dumps(obj))
+    if expire is not None:
+        redis_db.expire(key, expire)
 
 def redis_get_json(key: str) -> dict:
     if connect_redis() == True and redis_db.exists(key):
@@ -230,7 +232,7 @@ def search():
                 f"SELECT * FROM CatalogManager "
                 f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT {page_base*10},50;"
             )
-            redis_set_json(query_id, result)
+            redis_set_json(query_id, result, 15*60)
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
         return json.dumps(result_page)
@@ -250,7 +252,7 @@ def recommend():
                 f"SELECT * FROM CatalogManager "
                 f"ORDER BY RAND() LIMIT 50;"
             )
-            redis_set_json(query_id, result)
+            redis_set_json(query_id, result, 30*60)
 
         result = random.sample(result, 10)
         return json.dumps(result)
@@ -285,7 +287,7 @@ def get_catalog():
     catalog = redis_get_json(query_id)
     if catalog is None:
         catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
-        redis_set_json(query_id, catalog)
+        redis_set_json(query_id, catalog, 60*60)
     return json.dumps(catalog)
 
 @app.route('/table_preview')
