@@ -25,14 +25,28 @@ CORS(app)
 import pymysql
 class MySQLDB:
     def __init__(self, mysql_conn: dict):
-        self.__mysql_db   = None
-        self.__mysql_conn = mysql_conn
+        self.__mysql_db      = None
+        self.__mysql_conn_db = mysql_conn['db']
+        self.__mysql_conn    = mysql_conn
+        del self.__mysql_conn['db']
 
     def __connect_mysql(self, retry=3) -> bool:
         if self.__mysql_db is not None:
             return True
         while retry >= 0:
             try:
+                # First check if database exists
+                print(self.__mysql_conn, file=sys.stderr)
+                self.__mysql_db = pymysql.connect(**self.__mysql_conn)
+                cursor = self.__mysql_db.cursor(pymysql.cursors.DictCursor)
+                print(f"CREATE DATABASE IF NOT EXISTS {self.__mysql_conn_db};", file=sys.stderr)
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS {self.__mysql_conn_db};")
+                self.__mysql_db.commit()
+                cursor.close()
+                self.__mysql_db.close()
+
+                self.__mysql_conn['db'] = self.__mysql_conn_db
+                print(self.__mysql_conn, file=sys.stderr)
                 self.__mysql_db = pymysql.connect(**self.__mysql_conn)
                 return True
             except Exception as ex:
@@ -48,6 +62,7 @@ class MySQLDB:
         cursor.execute(query)
         self.__mysql_db.commit()
         result = cursor.fetchall()
+        cursor.close()
         return result
 
 sql_db = MySQLDB({
@@ -58,14 +73,39 @@ sql_db = MySQLDB({
     "db": "datafabric",
     "charset": "utf8"
 })
-transaction_db = MySQLDB({
+
+class TransactionDB(MySQLDB):
+    def __init__(self, mysql_conn: dict, transaction_table: str):
+        MySQLDB.__init__(self, mysql_conn)
+        self.__transaction_table = transaction_table
+        self.query(
+            f"CREATE TABLE IF NOT EXISTS {self.__transaction_table} ("
+            f"    ID         BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+            f"    Action     VARCHAR(100),"
+            f"    Args       TEXT,"
+            f"    User       VARCHAR(100),"
+            f"    Status     VARCHAR(100),"
+            f"    Result     TEXT,"
+            f"    Timestamp  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
+            f"    Datetime   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+            f");"
+        )
+    def add_transaction(self, action: str, args: dict, username: str, status: str = None, result: str = None):
+        status_str = ("'" + status + "'") if status is not None else 'NULL'
+        result_str = ("'" + result + "'") if result is not None else 'NULL'
+        self.query(
+            f"INSERT INTO {self.__transaction_table} (Action, Args, User, status, result) "
+            f"VALUES ('{action}', '{json.dumps(args)}', '{username}', {status_str}, {result_str}"
+            f");"
+        )
+transaction_db = TransactionDB({
     "host": "datafabric-mysql",
     "port": 3306,
     "user": "root",
     "password": "my-secret-pw",
     "db": "datafabric_transaction",
     "charset": "utf8"
-})
+}, 'TransactionLogs')
 ''' ================ MySQL Init ================ '''
 
 
@@ -195,10 +235,13 @@ def validate_permission(action_info: dict) -> bool:
 @app.route('/')
 def index():
     if not validate_user():
+        transaction_db.add_transaction('index', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     with open('./flask_config.json', 'r') as rf:
         flask_config = json.load(rf)
+
+    transaction_db.add_transaction('index', {}, session['user_info']['username'], None, None)
     return render_template('index.html', flaskConfig = flask_config)
 
 
@@ -216,6 +259,7 @@ def get_user_info(username: str, password: str) -> dict:
 def login():
     try:
         if request.method == 'GET':
+            transaction_db.add_transaction('login.GET', {}, '', None, None)
             return render_template('login.html')
         elif request.method == 'POST':
             username = request.form.get('username')
@@ -224,31 +268,29 @@ def login():
             user_info = get_user_info(username, password)
             if user_info is not None:
                 session['user_info'] = user_info
+                transaction_db.add_transaction('login.POST', request.form.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
                 return redirect(url_for('index'))
             else:
+                transaction_db.add_transaction('login.POST', request.form.to_dict(), '', 'FAILED', "Login Failed!")
                 return "Login Failed!"
     except Exception as e:
         return str(e), 500
 
 @app.route('/searchhints')
 def searchhints():
-    if not validate_user():
-        return redirect(url_for('login'))
-
     try:
         return json.dumps([
-            'ChineseExamScore',
-            'EnglishExamScore',
-            'MathExamScore'
+            'MyTable',
+            'Catalog',
+            'Column'
         ])
     except Exception as e:
         return str(e), 500
 
 @app.route('/search')
 def search():
-    global redis_db
-
     if not validate_user():
+        transaction_db.add_transaction('search', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     try:
@@ -268,6 +310,8 @@ def search():
             cache_db.set_json(query_id, result, 15*60)
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
+        
+        transaction_db.add_transaction('search', request.args.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
         return json.dumps(result_page)
     except Exception as e:
         return str(e), 500
@@ -275,6 +319,7 @@ def search():
 @app.route('/recommend')
 def recommend():
     if not validate_user():
+        transaction_db.add_transaction('recommend', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     try:
@@ -288,6 +333,8 @@ def recommend():
             cache_db.set_json(query_id, result, 30*60)
 
         result = random.sample(result, 10)
+
+        transaction_db.add_transaction('recommend', request.args.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
@@ -295,12 +342,15 @@ def recommend():
 @app.route('/catalog')
 def catalog():
     if not validate_user():
+        transaction_db.add_transaction('catalog', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     catalog_id = request.args.get('catalog_id', type=int)
     if not validate_permission({'action': 'catalog','catalog_id' : catalog_id}):
+        transaction_db.add_transaction('catalog', request.args.to_dict(), session['user_info']['username'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
+    transaction_db.add_transaction('catalog', request.args.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
     return render_template('catalog.html', catalogId = catalog_id)
 
 def get_table_info(tableid: int) -> dict:
@@ -310,10 +360,12 @@ def get_table_info(tableid: int) -> dict:
 @app.route('/get_catalog')
 def get_catalog():
     if not validate_user():
+        transaction_db.add_transaction('get_catalog', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     catalog_id = request.args.get('catalog_id', type=int)
     if not validate_permission({'action': 'get_catalog','catalog_id' : catalog_id}):
+        transaction_db.add_transaction('get_catalog', request.args.to_dict(), session['user_info']['username'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
     query_id = f"catalog={catalog_id}"
@@ -321,17 +373,21 @@ def get_catalog():
     if catalog is None:
         catalog = sql_db.query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
         cache_db.set_json(query_id, catalog, 60*60)
+    
+    transaction_db.add_transaction('get_catalog', request.args.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
     return json.dumps(catalog)
 
 @app.route('/table_preview')
 def table_preview():
     if not validate_user():
+        transaction_db.add_transaction('table_preview', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     try:
         limit     = request.args.get('limit', default=5, type=int)
         table_id  = request.args.get('table_id', type=int)
         if not validate_permission({'action': 'table_preview','table_id' : table_id}):
+            transaction_db.add_transaction('table_preview', request.args.to_dict(), session['user_info']['username'], 'FAILED', 'Permission denied.')
             return "Permission denied.", 403
 
         table_info = get_table_info(table_id)
@@ -346,10 +402,8 @@ def table_preview():
             conn_username, conn_password,
             ip, port, dbms, db, table, limit
         )
+
+        transaction_db.add_transaction('table_preview', request.args.to_dict(), session['user_info']['username'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
-
-@app.route('/test')
-def test():
-    return json.dumps(sql_db.query("SELECT * FROM CatalogManager;"))
