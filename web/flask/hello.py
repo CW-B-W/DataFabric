@@ -23,100 +23,135 @@ CORS(app)
 
 ''' ================ MySQL Init ================ '''
 import pymysql
-mysql_settings = {
+class MySQLDB:
+    def __init__(self, mysql_conn: dict):
+        self.__mysql_db   = None
+        self.__mysql_conn = mysql_conn
+
+    def __connect_mysql(self, retry=3) -> bool:
+        if self.__mysql_db is not None:
+            return True
+        while retry >= 0:
+            try:
+                self.__mysql_db = pymysql.connect(**self.__mysql_conn)
+                return True
+            except Exception as ex:
+                if retry == 0:
+                    raise ex
+                retry -= 1
+        return False
+
+    def query(self, query: str) -> bool:
+        if self.__connect_mysql() == False:
+            raise "Failed to connect MySQL."
+        cursor = self.__mysql_db.cursor(pymysql.cursors.DictCursor)
+        cursor.execute(query)
+        self.__mysql_db.commit()
+        result = cursor.fetchall()
+        return result
+
+sql_db = MySQLDB({
     "host": "datafabric-mysql",
     "port": 3306,
     "user": "root",
     "password": "my-secret-pw",
     "db": "datafabric",
     "charset": "utf8"
-}
-mysql_db = None
-def connect_mysql(retry=3) -> bool:
-    global mysql_db
-    if not mysql_db is None:
-        return True
-    while retry >= 0:
-        try:
-            mysql_db = pymysql.connect(**mysql_settings)
-            return True
-        except Exception as ex:
-            print(ex)
-            retry -= 1
-    return False
-
-def mysql_query(query: str) -> bool:
-    if connect_mysql() == False:
-        raise "Failed to connect MySQL."
-    cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
-    cursor.execute(query)
-    mysql_db.commit()
-    result = cursor.fetchall()
-    return result
+})
+transaction_db = MySQLDB({
+    "host": "datafabric-mysql",
+    "port": 3306,
+    "user": "root",
+    "password": "my-secret-pw",
+    "db": "datafabric_transaction",
+    "charset": "utf8"
+})
 ''' ================ MySQL Init ================ '''
 
 
 ''' ================ Redis Init ================ '''
 import redis
-redis_db = None
-def connect_redis(retry=3) -> bool:
-    global redis_db
-    if not redis_db is None:
-        return True
-    while retry >= 0:
-        try:
-            redis_db = redis.Redis(host='datafabric-redis', port=6379, db=0)
+class RedisDB:
+    def __init__(self, host, port=6379, db=0):
+        self.__redis_db = None
+        self.__host     = host
+        self.__port     = port
+        self.__db       = db
+
+    def __connect_redis(self, retry=3) -> bool:
+        if self.__redis_db is not None:
             return True
-        except Exception as ex:
-            print(ex)
-            retry -= 1
-    return False
+        while retry >= 0:
+            try:
+                self.__redis_db = redis.Redis(host=self.__host, port=self.__port, db=self.__db)
+                return True
+            except Exception as ex:
+                if retry == 0:
+                    raise ex
+                retry -= 1
+        return False
 
-def redis_set_json(key: str, obj: dict, expire: int = None) -> bool:
-    redis_db.set(key, json.dumps(obj))
-    if expire is not None:
-        redis_db.expire(key, expire)
+    def set_json(self, key: str, obj: dict, expire: int = None) -> bool:
+        if self.__connect_redis() == True:
+            self.__redis_db.set(key, json.dumps(obj))
+            if expire is not None:
+                self.__redis_db.expire(key, expire)
+            return True
+        else:
+            return False
 
-def redis_get_json(key: str) -> dict:
-    if connect_redis() == True and redis_db.exists(key):
-        return json.loads(redis_db.get(key).decode('utf-8'))
-    else:
-        return None
+    def get_json(self, key: str) -> dict:
+        if self.__connect_redis() == True and self.__redis_db.exists(key):
+            return json.loads(self.__redis_db.get(key).decode('utf-8'))
+        else:
+            return None
+
+cache_db = RedisDB('datafabric-redis')
 ''' ================ Redis Init ================ '''
 
 
 ''' ================ Mongo Init ================ '''
 import pymongo
 from bson import json_util
-mongo_client = None
-mongo_db     = None
-def connect_mongo(retry=3) -> bool:
-    global mongo_client
-    global mongo_db
-    if not mongo_client is None:
-        return True
-    while retry >= 0:
-        try:
-            mongo_client = pymongo.MongoClient(
-                    'mongodb://%s:%s@datafabric-mongo' % ('root', 'example'), 
-                    serverSelectionTimeoutMS=3000)
-            mongo_client.server_info()
-            mongo_db = mongo_client['datafabric']
+class MongoDB:
+    def __init__(self, host, username, password):
+        self.__mongo_client = None
+        self.__mongo_db     = None
+        self.__host         = host
+        self.__username     = username
+        self.__password     = password
+
+    def __connect_mongo(self, retry=3) -> bool:
+        if self.__mongo_client is not None:
             return True
-        except Exception as ex:
-            print(ex)
-            retry -= 1
-    return False
+        while retry >= 0:
+            try:
+                mongo_client = pymongo.MongoClient(
+                        f'mongodb://{self.__username}:{self.__password}@{self.__host}',
+                        serverSelectionTimeoutMS=3000)
+                mongo_client.server_info()
+                mongo_db = mongo_client['datafabric']
+                self.__mongo_client = mongo_client
+                self.__mongo_db     = mongo_db
+                return True
+            except Exception as ex:
+                if retry == 0:
+                    raise ex
+                retry -= 1
+        return False
+    
+    def query(self, collection_name: str, arg1: dict = {}, arg2: dict = {}) -> dict:
+        if self.__connect_mongo() == False:
+            raise "Failed to connect Mongo."
+        collection = self.__mongo_db[collection_name]
+        result = collection.find(arg1, arg2)
+        return result
+    
+    @staticmethod
+    def parse_bson(data):
+        return json.loads(json_util.dumps(data))
 
-def mongo_query(collection_name: str, arg1: dict = {}, arg2: dict = {}) -> dict:
-    if connect_mongo() == False:
-        raise "Failed to connect MySQL."
-    collection = mongo_db[collection_name]
-    result = collection.find(arg1, arg2)
-    return result
-
-def parse_bson(data):
-    return json.loads(json_util.dumps(data))
+nosql_db = MongoDB('datafabric-mongo', 'root', 'example')
 ''' ================ Mongo Init ================ '''
 
 
@@ -147,8 +182,6 @@ def validate_permission(action_info: dict) -> bool:
         return False
     elif action_info['action'] == 'table_preview':
         table_id = str(action_info['table_id'])
-        print(table_id, file=sys.stderr)
-        print(user_info['permission']['table_id'], file=sys.stderr)
         if user_info['permission']['table_id']['*'] == True:
             return True
         elif table_id in user_info['permission']['table_id']:
@@ -171,9 +204,9 @@ def index():
 
 def get_user_info(username: str, password: str) -> dict:
     try:
-        result = mongo_query('user_info', {"username": {"$eq": username}})
+        result = nosql_db.query('user_info', {"username": {"$eq": username}})
         if result[0]['password'] == password:
-            return parse_bson(result[0]) # To make sure it's serializable
+            return MongoDB.parse_bson(result[0]) # To make sure it's serializable
         else:
             return None
     except Exception as e:
@@ -226,13 +259,13 @@ def search():
             return json.dumps([])
 
         query_id = f"user={session['user_info']['username']}&search={search_text}&page={page_base+1}~{page_base+5}"
-        result = redis_get_json(query_id)
+        result = cache_db.get_json(query_id)
         if result is None:
-            result = mysql_query(
+            result = sql_db.query(
                 f"SELECT * FROM CatalogManager "
                 f"WHERE LOWER(ColumnMembers) LIKE '%{search_text.lower()}%' LIMIT {page_base*10},50;"
             )
-            redis_set_json(query_id, result, 15*60)
+            cache_db.set_json(query_id, result, 15*60)
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
         return json.dumps(result_page)
@@ -246,13 +279,13 @@ def recommend():
 
     try:
         query_id = f"user={session['user_info']['username']}&recommend=random"
-        result = redis_get_json(query_id)
+        result = cache_db.get_json(query_id)
         if result is None:
-            result = mysql_query(
+            result = sql_db.query(
                 f"SELECT * FROM CatalogManager "
                 f"ORDER BY RAND() LIMIT 50;"
             )
-            redis_set_json(query_id, result, 30*60)
+            cache_db.set_json(query_id, result, 30*60)
 
         result = random.sample(result, 10)
         return json.dumps(result)
@@ -271,7 +304,7 @@ def catalog():
     return render_template('catalog.html', catalogId = catalog_id)
 
 def get_table_info(tableid: int) -> dict:
-    result = mysql_query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
+    result = sql_db.query(f"SELECT * FROM TableInfo WHERE ID = {tableid};")
     return result[0]
 
 @app.route('/get_catalog')
@@ -284,10 +317,10 @@ def get_catalog():
         return "Permission denied.", 403
 
     query_id = f"catalog={catalog_id}"
-    catalog = redis_get_json(query_id)
+    catalog = cache_db.get_json(query_id)
     if catalog is None:
-        catalog = mysql_query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
-        redis_set_json(query_id, catalog, 60*60)
+        catalog = sql_db.query(f"SELECT * FROM CatalogManager WHERE ID = {catalog_id};")
+        cache_db.set_json(query_id, catalog, 60*60)
     return json.dumps(catalog)
 
 @app.route('/table_preview')
@@ -313,7 +346,10 @@ def table_preview():
             conn_username, conn_password,
             ip, port, dbms, db, table, limit
         )
-        print(result, file=sys.stderr)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
+
+@app.route('/test')
+def test():
+    return json.dumps(sql_db.query("SELECT * FROM CatalogManager;"))
