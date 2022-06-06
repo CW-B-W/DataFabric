@@ -3,6 +3,7 @@ import pymysql
 import pymongo
 import argparse
 from tqdm import tqdm
+import time
 
 table_info_idx = 0
 column_cnt     = 0
@@ -34,6 +35,7 @@ def new_random_catalog(table_info_list):
     sampled = random.sample(table_info_list, n_table)
 
     catalog = {
+        'ID'              : f'{catalog_idx}',
         'CatalogName'     : f'Catalog{catalog_idx}',
         'TableMembers'    : '',
         'TableIds'        : '',
@@ -269,8 +271,8 @@ def create_databases():
     except Exception as ex:
         print(ex)
 
-def generate_mysql(n_table, n_catalog):
-    print("[Generating MySQL testdata]")
+def generate_catalogs(n_table, n_catalog):
+    print("[Generating catalogs testdata]")
 
     print("Creating databases")
     create_databases()
@@ -295,11 +297,14 @@ def generate_mysql(n_table, n_catalog):
     create_catalog_table(catalog_list)
     print("Finished!")
 
+    return catalog_list
 
-user_info_idx = 0
+
+user_info_idx = 1
 def new_random_user_info():
     global user_info_idx
     user_info = {
+        'id'       : f'{user_info_idx}',
         'username' : f'user{user_info_idx}',
         'password' : f'{user_info_idx}',
         'db_account' : {
@@ -334,8 +339,8 @@ def new_random_user_info():
     user_info_idx += 1
     return user_info
 
-def generate_mongo(n_user):
-    print("[Generating MongoDB testdata]")
+def generate_users(n_user):
+    print("[Generating users testdata]")
 
     myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
 
@@ -351,6 +356,7 @@ def generate_mongo(n_user):
     mycol.drop()
     mycol = mydb['user_info']
     user_info_list.append({
+        'id'       : f'0',
         'username' : f'admin',
         'password' : f'admin',
         'db_account' : {
@@ -383,23 +389,74 @@ def generate_mongo(n_user):
     x = mycol.insert_many(user_info_list)
     print("Finished!")
 
+    return user_info_list
+
+def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
+    rating = {
+        'user' : user['id'],
+        'catalog_rating' : {
+
+        }
+    }
+
+    sampled_catalogs = random.sample(catalog_list, random.randint(0, int(len(catalog_list)*rate_ratio)))
+    for catalog in sampled_catalogs:
+        rating['catalog_rating'][catalog['ID']] = random.randint(0, 5)
+
+    return rating
+
+def generate_ratings(user_info_list, catalog_list):
+    print("[Generating ratings testdata]")
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+
+    print("Acquiring databases")
+    mydb = myclient['datafabric']
+    print("Finished!")
+
+    user_rating_list = []
+    print("Generating ratings")
+    mycol = mydb['ratings']
+    mycol.drop()
+    mycol = mydb['ratings']
+
+    for user in user_info_list:
+        user_rating_list.append(new_random_rating(user, catalog_list))
+    x = mycol.insert_many(user_rating_list)
+    print("Finished!")
+
+    return user_rating_list
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--table", help="Number of testdata tables", type=int)
     parser.add_argument("-c", "--catalog", help="Number of catalogs", type=int)
     parser.add_argument("-u", "--user", help="Number of users", type=int)
+    parser.add_argument("-r", "--rating", help="Generate rating", action='store_true')
     args = parser.parse_args()
 
-    n_table   = args.table
-    n_catalog = args.catalog
-    n_user    = args.user
+    n_table    = args.table
+    n_catalog  = args.catalog
+    n_user     = args.user
+    gen_rating = args.rating
     random.seed(0)
 
     if not (n_table is None or n_catalog is None):
-        generate_mysql(n_table, n_catalog)
+        start = time.time()
+        catalog_list = generate_catalogs(n_table, n_catalog)
+        end = time.time()
+        print(f"[generate_catalogs] elapsed time: {end-start}")
 
     if not (n_user is None):
-        generate_mongo(n_user)
+        start = time.time()
+        user_info_list = generate_users(n_user)
+        end = time.time()
+        print(f"[generate_users] elapsed time: {end-start}")
+
+    if gen_rating:
+        start = time.time()
+        user_rating_list = generate_ratings(user_info_list, catalog_list)
+        end = time.time()
+        print(f"[generate_ratings] elapsed time: {end-start}")
     
 if __name__ == '__main__':
     main()

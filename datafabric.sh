@@ -42,7 +42,11 @@ function mongo_cli() {
 }
 
 function generate_test_data() {
-    docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3
+    local gen_rating=""
+    if [[ "$4" == "1" ]]; then
+        gen_rating="-r"
+    fi
+    docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
 }
 
 function restart_flask() {
@@ -63,7 +67,7 @@ function print_help() {
     echo -e "\t./datafabric.sh flask-cli"
     echo -e "\t./datafabric.sh mysql"
     echo -e "\t./datafabric.sh mongo"
-    echo -e "\t./datafabric.sh generate_testdata 1000 50 100"
+    echo -e "\t./datafabric.sh generate_testdata 1000 200 50 1"
 }
 
 if [[ "$1" == "help" ]]; then
@@ -93,7 +97,7 @@ elif [[ "$1" == "generate_testdata" ]]; then
     while true; do
         read -p "This operation will overwrite all the tables in MySQL! [Y/n]" yn
         case $yn in
-            [Yy]* ) generate_test_data ${2:-1000} ${3:-50} ${4:-100}; break;;
+            [Yy]* ) generate_test_data ${2:-1000} ${3:-200} ${4:-50} ${5:-1}; break;;
             [Nn]* ) exit;;
             * ) echo "Please answer yes or no.";;
         esac
