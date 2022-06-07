@@ -411,7 +411,7 @@ def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
 
     sampled_catalogs = random.sample(catalog_list, random.randint(0, int(len(catalog_list)*rate_ratio)))
     for catalog in sampled_catalogs:
-        rating['catalog_rating'][catalog['ID']] = random.randint(0, 5)
+        rating['catalog_rating'][str(catalog['ID'])] = random.randint(0, 5)
 
     return rating
 
