@@ -323,18 +323,25 @@ def new_random_user_info():
                 }
             }
         },
-        'permission': {
+        'data_permission': {
             'catalog_id' : {
                 '*': False
             },
             'table_id' : {
                 '*': False
             }
+        },
+        'action_permission': {
+            'search': True,
+            'recommend': True,
+            'catalog_page': False,
+            'get_catalog': False,
+            'table_preview': False
         }
     }
     for i in range(user_info_idx):
-        user_info['permission']['catalog_id'][str(i)] = True
-        user_info['permission']['table_id'][str(i)] = True
+        user_info['data_permission']['catalog_id'][str(i)] = True
+        user_info['data_permission']['table_id'][str(i)] = True
 
     user_info_idx += 1
     return user_info
@@ -375,13 +382,20 @@ def generate_users(n_user):
                 }
             }
         },
-        'permission': {
+        'data_permission': {
             'catalog_id' : {
                 '*': True
             },
             'table_id' : {
                 '*': True
             }
+        },
+        'action_permission': {
+            'search': True,
+            'recommend': True,
+            'catalog_page': True,
+            'get_catalog': True,
+            'table_preview': True
         }
     })
     for i in tqdm(range(n_user)):
