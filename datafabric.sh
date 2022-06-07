@@ -54,6 +54,10 @@ function restart_flask() {
     docker-compose up -d flask
 }
 
+function initialize_datafabric() {
+    docker exec -it datafabric-flask python3 /flask-share/initialize_datafabric.py
+}
+
 function print_help() {
     echo -e "Usage example:"
     echo -e "\t./datafabric.sh help"
@@ -104,6 +108,8 @@ elif [[ "$1" == "generate_testdata" ]]; then
     done
 elif [[ "$1" == "restart-flask" ]]; then
     restart_flask
+elif [[ "$1" == "initialize" ]]; then
+    initialize_datafabric
 else
     print_help
 fi
