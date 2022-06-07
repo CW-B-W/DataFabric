@@ -55,21 +55,47 @@ def create_mysql_table(db, table, create_sql, replace=True):
         print(ex)
 
 
-# def create_mongo_database(db, replace=True):
-#     myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+def create_mongo_database(db, replace=True):
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
 
-#     if replace:
-#         myclient.drop_database(db)
-#     mydb = myclient[db]
+    if replace:
+        myclient.drop_database(db)
+    mydb = myclient[db]
 
-# def create_mongo_collection(db, collection, replace=True):
-#     myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
-#     myclient.drop_database(db)
-#     mydb = myclient[db]
-#     if replace:
-#         if collection in mydb.list_collection_names():
-#             mydb[collection].drop()
-#     mycol = mydb[collection]
+def create_mongo_collection(db, collection, replace=True):
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+    myclient.drop_database(db)
+    mydb = myclient[db]
+    if replace:
+        if collection in mydb.list_collection_names():
+            mydb[collection].drop()
+    mycol = mydb[collection]
+
+def create_user_admin():
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+    mydb = myclient['user_info']
+    mycol = mydb['user_info']
+    mycol.drop()
+    mycol = mydb['user_info']
+    mycol.insertOne({
+        'id'       : f'0',
+        'username' : f'admin',
+        'password' : f'admin',
+        'db_account' : {
+            
+        },
+        'data_permission': {
+            'catalog_id' : {
+                '*': True
+            },
+            'table_id' : {
+                '*': True
+            }
+        },
+        'action_permission': {
+            '*': True
+        }
+    })
 
 def main():
     print("[Creating MySQL databases]")

@@ -391,11 +391,7 @@ def generate_users(n_user):
             }
         },
         'action_permission': {
-            'search': True,
-            'recommend': True,
-            'catalog_page': True,
-            'get_catalog': True,
-            'table_preview': True
+            '*': True
         }
     })
     for i in tqdm(range(n_user)):

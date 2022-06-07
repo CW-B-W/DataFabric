@@ -87,9 +87,12 @@ def validate_permission(action_info: dict) -> bool:
 
     user_info = session['user_info']
 
-    if action_info['action'] not in user_info['action_permission'] \
-            or user_info['action_permission'][action_info['action']] == False:
-        return False
+    # action permission check
+    if not ('*' in user_info['action_permission'] and user_info['action_permission']['*'] == True):
+        # user doesn't have '*' permission
+        if action_info['action'] not in user_info['action_permission'] \
+                or user_info['action_permission'][action_info['action']] == False:
+            return False
 
     # simple example of permission check
     if action_info['action'] == 'catalog_page' or action_info['action'] == 'get_catalog':
