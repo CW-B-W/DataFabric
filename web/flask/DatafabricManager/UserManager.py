@@ -88,8 +88,8 @@ def get_table_permission(user_id: int, table_id: int):
             and user_info['data_permission']['table_id']['*'] == True:
         return True
     elif table_id in user_info['data_permission']['table_id'] \
-        and user_info['data_permission']['table_id'][table_id] == True:
-            return True
+            and user_info['data_permission']['table_id'][table_id] == True:
+        return True
     
     return False
 
@@ -103,8 +103,8 @@ def get_catalog_permission(user_id: int, catalog_id: int):
             and user_info['data_permission']['catalog_id']['*'] == True:
         return True
     elif catalog_id in user_info['data_permission']['catalog_id'] \
-        and user_info['data_permission']['catalog_id'][catalog_id] == True:
-            return True
+            and user_info['data_permission']['catalog_id'][catalog_id] == True:
+        return True
     
     return False
 
