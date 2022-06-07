@@ -35,7 +35,7 @@ def new_random_catalog(table_info_list):
     sampled = random.sample(table_info_list, n_table)
 
     catalog = {
-        'ID'              : f'{catalog_idx}',
+        'ID'              : catalog_idx,
         'CatalogName'     : f'Catalog{catalog_idx}',
         'TableMembers'    : '',
         'TableIds'        : '',
@@ -304,7 +304,7 @@ user_info_idx = 1
 def new_random_user_info():
     global user_info_idx
     user_info = {
-        'id'       : f'{user_info_idx}',
+        'id'       : user_info_idx,
         'username' : f'user{user_info_idx}',
         'password' : f'{user_info_idx}',
         'db_account' : {
@@ -363,7 +363,7 @@ def generate_users(n_user):
     mycol.drop()
     mycol = mydb['user_info']
     user_info_list.append({
-        'id'       : f'0',
+        'id'       : 0,
         'username' : f'admin',
         'password' : f'admin',
         'db_account' : {

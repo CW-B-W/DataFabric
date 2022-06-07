@@ -75,7 +75,7 @@ def validate_user() -> bool:
     '''
     To check whether user had login.
     '''
-    if 'user_info' in session:
+    if 'user_id' in session:
         return True
     else:
         return False
@@ -85,36 +85,22 @@ def validate_permission(action_info: dict) -> bool:
     To check whether user has the permission to access the requested data.
     '''
 
-    user_info = session['user_info']
-
-    # action permission check
-    if not ('*' in user_info['action_permission'] and user_info['action_permission']['*'] == True):
-        # user doesn't have '*' permission
-        if action_info['action'] not in user_info['action_permission'] \
-                or user_info['action_permission'][action_info['action']] == False:
+    user_id = session['user_id']
+    try:
+        if UserManager.get_action_permission(user_id, action_info['action']) == False:
             return False
 
-    # simple example of permission check
-    if action_info['action'] == 'catalog_page' or action_info['action'] == 'get_catalog':
-        catalog_id = str(action_info['catalog_id'])
-        if user_info['data_permission']['catalog_id']['*'] == True:
-            return True
-        elif catalog_id in user_info['data_permission']['catalog_id']:
-            if user_info['data_permission']['catalog_id'][catalog_id] == True:
-                return True
+        # simple example of permission check
+        if action_info['action'] == 'catalog_page' or action_info['action'] == 'get_catalog':
+            catalog_id = action_info['catalog_id']
+            return UserManager.get_catalog_permission(user_id, catalog_id)
+        elif action_info['action'] == 'table_preview':
+            table_id = action_info['table_id']
+            return UserManager.get_catalog_permission(user_id, table_id)
 
         return False
-    elif action_info['action'] == 'table_preview':
-        table_id = str(action_info['table_id'])
-        if user_info['data_permission']['table_id']['*'] == True:
-            return True
-        elif table_id in user_info['data_permission']['table_id']:
-            if user_info['data_permission']['table_id'][table_id] == True:
-                return True
-
+    except Exception as e:
         return False
-
-    return False
 
 @app.route('/')
 def index():
@@ -125,7 +111,7 @@ def index():
     with open('./flask_config.json', 'r') as rf:
         flask_config = json.load(rf)
 
-    transaction_logging.add_transaction('index', {}, session['user_info']['id'], None, None)
+    transaction_logging.add_transaction('index', {}, session['user_id'], None, None)
     return render_template('index.html', flaskConfig = flask_config)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -138,10 +124,10 @@ def login():
             username = request.form.get('username')
             password = request.form.get('password')
 
-            user_info = UserManager.get_user_info(username, password)
-            if user_info is not None:
-                session['user_info'] = user_info
-                transaction_logging.add_transaction('login.POST', request.form.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+            user_id = UserManager.login(username, password)
+            if user_id >= 0:
+                session['user_id'] = user_id
+                transaction_logging.add_transaction('login.POST', request.form.to_dict(), session['user_id'], 'SUCCEEDED', None)
                 return redirect(url_for('index'))
             else:
                 transaction_logging.add_transaction('login.POST', request.form.to_dict(), '', 'FAILED', "Login Failed!")
@@ -173,7 +159,7 @@ def search():
         if search_text == '':
             return json.dumps([])
 
-        query_id = f"user={session['user_info']['id']}&search={search_text}&page={page_base+1}~{page_base+5}"
+        query_id = f"user={session['user_id']}&search={search_text}&page={page_base+1}~{page_base+5}"
         result = cache_db.get_json(query_id)
         if result is None:
             result = CatalogManager.search(search_text, page_base, 50)
@@ -181,7 +167,7 @@ def search():
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]
         
-        transaction_logging.add_transaction('search', request.args.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+        transaction_logging.add_transaction('search', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result_page)
     except Exception as e:
         return str(e), 500
@@ -193,16 +179,15 @@ def recommend():
         return redirect(url_for('login'))
 
     try:
-        query_id = f"user={session['user_info']['id']}&recommend=random"
+        query_id = f"user={session['user_id']}&recommend=random"
         result = cache_db.get_json(query_id)
         if result is None:
-            user_info = session['user_info']
-            result = RecommenderService.recommend(user_info['id'])
+            result = RecommenderService.recommend(session['user_id'])
             cache_db.set_json(query_id, result, 30*60)
 
         result = random.sample(result, 10)
 
-        transaction_logging.add_transaction('recommend', request.args.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+        transaction_logging.add_transaction('recommend', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
@@ -215,10 +200,10 @@ def catalog_page():
 
     catalog_id = request.args.get('catalog_id', type=int)
     if not validate_permission({'action': 'catalog_page','catalog_id' : catalog_id}):
-        transaction_logging.add_transaction('catalog_page', request.args.to_dict(), session['user_info']['id'], 'FAILED', 'Permission denied.')
+        transaction_logging.add_transaction('catalog_page', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
-    transaction_logging.add_transaction('catalog_page', request.args.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+    transaction_logging.add_transaction('catalog_page', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return render_template('catalog.html', catalogId = catalog_id)
 
 @app.route('/get_catalog')
@@ -229,7 +214,7 @@ def get_catalog():
 
     catalog_id = request.args.get('catalog_id', type=int)
     if not validate_permission({'action': 'get_catalog','catalog_id' : catalog_id}):
-        transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_info']['id'], 'FAILED', 'Permission denied.')
+        transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
     query_id = f"catalog={catalog_id}"
@@ -240,7 +225,7 @@ def get_catalog():
             return "Invalid catalog_id"
         cache_db.set_json(query_id, catalog, 60*60)
     
-    transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+    transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return json.dumps(catalog)
 
 @app.route('/table_preview')
@@ -253,7 +238,7 @@ def table_preview():
         limit     = request.args.get('limit', default=5, type=int)
         table_id  = request.args.get('table_id', type=int)
         if not validate_permission({'action': 'table_preview','table_id' : table_id}):
-            transaction_logging.add_transaction('table_preview', request.args.to_dict(), session['user_info']['id'], 'FAILED', 'Permission denied.')
+            transaction_logging.add_transaction('table_preview', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
             return "Permission denied.", 403
 
         table_info = TableManager.get_table_info(table_id)
@@ -264,15 +249,15 @@ def table_preview():
         dbms     = table_info['DBMS'].lower()
         db       = table_info['DB']
         table    = table_info['TableName']
-        conn_username = session['user_info']['db_account'][dbms][f'{ip}:{port}']['username']
-        conn_password = session['user_info']['db_account'][dbms][f'{ip}:{port}']['password']
+        conn_username = UserManager.get_db_account(session['user_id'], dbms, f'{ip}:{port}')['username']
+        conn_password = UserManager.get_db_account(session['user_id'], dbms, f'{ip}:{port}')['password']
 
         result = DBMSAccessor.preview_table(
             conn_username, conn_password,
             ip, port, dbms, db, table, limit
         )
 
-        transaction_logging.add_transaction('table_preview', request.args.to_dict(), session['user_info']['id'], 'SUCCEEDED', None)
+        transaction_logging.add_transaction('table_preview', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
