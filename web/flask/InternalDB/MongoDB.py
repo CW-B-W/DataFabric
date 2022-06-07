@@ -1,5 +1,6 @@
 import pymongo
 from bson import json_util
+from bson.objectid import ObjectId
 import json
 
 class MongoDB:
@@ -30,13 +31,30 @@ class MongoDB:
                 retry -= 1
         return False
     
-    def query(self, collection_name: str, arg1: dict = {}, arg2: dict = {}) -> dict:
+    def query(self, collection_name: str, query: dict = {}, filter: dict = {}) -> dict:
         if self.__connect_mongo() == False:
             raise "Failed to connect Mongo."
         collection = self.__mongo_db[collection_name]
-        result = collection.find(arg1, arg2)
+        result = collection.find(query, filter)
+        return result
+
+    def update(self, collection_name: str, query: dict, value: dict) -> dict:
+        if self.__connect_mongo() == False:
+            raise "Failed to connect Mongo."
+        collection = self.__mongo_db[collection_name]
+        _id = value['_id']
+        del value['_id']
+        value = {
+            "$set" : value
+        }
+        result = collection.update_one(query, value, upsert=False)
+        value['_id'] = _id
         return result
     
     @staticmethod
     def parse_bson(data):
         return json.loads(json_util.dumps(data))
+
+    @staticmethod
+    def to_ObjectId(_id: str):
+        return ObjectId(_id)

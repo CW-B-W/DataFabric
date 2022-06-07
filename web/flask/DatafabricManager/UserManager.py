@@ -36,39 +36,24 @@ def get_user_info(user_id: int) -> dict:
     if user_id in user_info_cache:
         return user_info_cache[user_id]
     else:
-        return None
+        result = mongodb.query('user_info', {"id": {"$eq": user_id}})
+        result = MongoDB.parse_bson(result[0]) # To make sure it's serializable
+        user_info_cache[result['id']] = result
+        return result
 
-def get_datafabric_permission(user_id: int, action: str) -> bool:
-    return
+def get_mongodb_query_for_user_info(user_info: dict) -> dict:
+    _id = MongoDB.to_ObjectId(user_info['_id']['$oid'])
+    return {'_id':_id}
 
-def get_catalogs_permission(user_id: int, catalogs: list) -> list:
-    """_summary_
-
-    Args:
-        user_id (int): _description_
-        catalogs (list): _description_
-
-    Returns:
-        list: _description_
-    """
-    return
-
-def get_tables_permission(user_id: int, tables: list) -> list:
-    """Return whether the tables are accessible by user
-
-    Args:
-        user_id (int): The user id in datafabric
-        tables (list): A list containing the table id of the requested tables
-
-    Returns:
-        list: A list containing the accessibility for the requested tables
-    """
-    
-    if user_id not in []:
-        raise ValueError("")
+def writeback_user_info(user_info):
+    mongodb.update(
+        'user_info',
+        get_mongodb_query_for_user_info(user_info),
+        user_info
+    )
 
 def get_action_permission(user_id: int, action: str):
-    user_info = user_info_cache[user_id]
+    user_info = get_user_info(user_id)
     if '*' in user_info['action_permission'] \
             and user_info['action_permission']['*'] == True:
         return True
@@ -78,12 +63,14 @@ def get_action_permission(user_id: int, action: str):
 
     return False
 
-def set_action_permission():
-    pass
+def set_action_permission(user_id: int, action: str, accessible: bool):
+    user_info = get_user_info(user_id)
+    user_info['action_permission'][action] = accessible
+    writeback_user_info(user_info)
 
 def get_table_permission(user_id: int, table_id: int):
     table_id = str(table_id)
-    user_info = user_info_cache[user_id]
+    user_info = get_user_info(user_id)
     if '*' in user_info['data_permission']['table_id'] \
             and user_info['data_permission']['table_id']['*'] == True:
         return True
@@ -93,12 +80,14 @@ def get_table_permission(user_id: int, table_id: int):
     
     return False
 
-def set_table_permission():
-    pass
+def set_table_permission(user_id: int, table_id: int, accessible: bool):
+    user_info = get_user_info(user_id)
+    user_info['data_permission']['table_id'][table_id] = accessible
+    writeback_user_info(user_info)
 
 def get_catalog_permission(user_id: int, catalog_id: int):
     catalog_id = str(catalog_id)
-    user_info = user_info_cache[user_id]
+    user_info = get_user_info(user_id)
     if '*' in user_info['data_permission']['catalog_id'] \
             and user_info['data_permission']['catalog_id']['*'] == True:
         return True
@@ -108,23 +97,39 @@ def get_catalog_permission(user_id: int, catalog_id: int):
     
     return False
 
-def set_catalog_permission():
-    pass
+def set_catalog_permission(user_id: int, catalog_id: int, accessible: bool):
+    user_info = get_user_info(user_id)
+    user_info['data_permission']['table_id'][catalog_id] = accessible
+    writeback_user_info(user_info)
 
 def get_db_account(user_id: int, dbms: str, ip_port: str) -> dict:
+    dbms = dbms.lower()
     if user_id in user_info_cache:
         return user_info_cache[user_id]['db_account'][dbms][ip_port]
     else:
         return None
 
-def set_db_account():
-    pass
+def set_db_account(user_id: int, dbms: str, ip_port: str, username: str, password: str):
+    dbms = dbms.lower()
+    user_info = get_user_info(user_id)
+    ip, port = ip_port.split(':')
+    user_info['db_account'][dbms][ip_port] = {
+        'ip'       : ip,
+        'port'     : port,
+        'username' : username,
+        'password' : password
+    }
+    writeback_user_info(user_info)
 
-def set_username():
-    pass
+def set_username(user_id: int, username: str):
+    user_info = get_user_info(user_id)
+    user_info['db_account']['username'] = username
+    writeback_user_info(user_info)
 
-def set_password():
-    pass
+def set_password(user_id: int, password: str):
+    user_info = get_user_info(user_id)
+    user_info['db_account']['password'] = password
+    writeback_user_info(user_info)
 
 def set_rating(user, catalog, rating):
     pass
