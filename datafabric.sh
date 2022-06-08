@@ -33,6 +33,10 @@ function flask_cli() {
     docker exec -it datafabric-flask /bin/bash
 }
 
+function flask_logs() {
+    tail -f web/flask/datafabric.log
+}
+
 function mysql_cli() {
     docker exec -it datafabric-mysql mysql --password=my-secret-pw
 }
@@ -97,6 +101,8 @@ elif [[ "$1" == "mongo" ]]; then
     mongo_cli
 elif [[ "$1" == "flask-cli" ]]; then
     flask_cli
+elif [[ "$1" == "flask-logs" ]]; then
+    flask_logs
 elif [[ "$1" == "generate_testdata" ]]; then
     while true; do
         read -p "This operation will overwrite all the tables in MySQL! [Y/n]" yn

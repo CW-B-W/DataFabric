@@ -3,6 +3,7 @@
 import json
 import sys, os, time
 import random
+import requests
 
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
@@ -184,7 +185,8 @@ def recommend():
             result = RecommenderService.recommend(session['user_id'])
             cache_db.set_json(query_id, result, 30*60)
 
-        result = random.sample(result, 10)
+        # return top10 results
+        result = result[:10]
 
         transaction_logging.add_transaction('recommend', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result)
@@ -260,3 +262,8 @@ def table_preview():
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
+
+@app.route('/train_recommender')
+def train_recommender():
+    response = requests.get('http://datafabric-recommender:5000/train')
+    return response.text

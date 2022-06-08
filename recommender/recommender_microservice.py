@@ -3,6 +3,7 @@
 import json
 import sys, os, time
 import random
+import json
 
 ''' ================ Flask Init ================ '''
 import flask
@@ -19,6 +20,7 @@ CORS(app)
 ''' ================ Flask Init ================ '''
 
 
+''' ================ PySpark Init ================ '''
 import pymongo
 import pyspark
 from pyspark import SparkContext
@@ -30,39 +32,71 @@ from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.sql.functions import col
 from pyspark.sql.functions import isnan, when, count
 from pyspark.sql.functions import *
+''' ================ PySpark Init ================ '''
+
+
 @app.route('/train')
 def train():
-    mongo_client = pymongo.MongoClient(
-                            f'mongodb://root:example@datafabric-mongo',
-                            serverSelectionTimeoutMS=3000)
+    try:
+        max_iter = request.args.get('max_iter', default=10, type=int)
+        rank     = request.args.get('rank', default=10, type=int)
+        save_collection = request.args.get('save_collection', default="default_recommendation", type=str)
+    except Exception as e:
+        print(str(e))
+        return "Failed to parse arguments. " + str(e), 500
 
-    mongo_db  = mongo_client['datafabric']
-    mongo_col = mongo_db['ratings']
+    try:
+        mongo_client = pymongo.MongoClient(
+                                f'mongodb://root:example@datafabric-mongo',
+                                serverSelectionTimeoutMS=3000)
+        mongo_db  = mongo_client['datafabric']
+        mongo_col = mongo_db['ratings']
 
-    rating_list = [] # (user, item, rating)
-    for entry in mongo_col.find({}, {'_id': 0, 'user': 1, 'catalog_rating': 1}):
-        for item in entry['catalog_rating']:
-            rating_list.append( (int(entry['user']), int(item), int(entry['catalog_rating'][item])) )
+        rating_list = [] # (user, item, rating)
+        for entry in mongo_col.find({}, {'_id': 0, 'user': 1, 'catalog_rating': 1}):
+            for item in entry['catalog_rating']:
+                rating_list.append( (int(entry['user']), int(item), int(entry['catalog_rating'][item])) )
+    except Exception as e:
+        print(str(e))
+        return "Failed to read from MongoDB. " + str(e), 500
 
-    conf = pyspark.SparkConf() \
-                .setMaster("local") \
-                .setAppName("ALS")
+    try:
+        conf = pyspark.SparkConf() \
+                    .setMaster("local") \
+                    .setAppName("ALS")
 
-    spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
-    df = spark.createDataFrame(
-        rating_list,
-        ["user", "item", "rating"]
-    )
+        df = spark.createDataFrame(
+            rating_list,
+            ["user", "item", "rating"]
+        )
 
-    # splitting into train and test sets
-    X_train, X_test = df.randomSplit([0.6, 0.4])
+        # splitting into train and test sets
+        # X_train, X_test = df.randomSplit([0.8, 0.2])
+        X_train = df
 
-    # training the model
-    als = ALS(rank=5, maxIter=5, seed=0, nonnegative=True)
-    model = als.fit(X_train.select(["user", "item", "rating"]))
+        # training the model
+        als = ALS(rank=rank, maxIter=max_iter, seed=0, nonnegative=True)
+        model = als.fit(X_train.select(["user", "item", "rating"]))
 
-    predictions = model.transform(X_test.select(["user", "item"]))
-    # predictions = predictions.withColumn("prediction", when(isnan(col("prediction")), lit(random.uniform(2, 4))).otherwise(col("prediction")))
-    predictions.show(1000)
+        # predictions = model.transform(X_test.select(["user", "item"]))
+        # predictions.show(1000)
+        
+        recommendations = model.recommendForAllUsers(100).toJSON().collect()
+        recommendations = list(map(lambda s: json.loads(s), recommendations))
+    except Exception as e:
+        print(str(e))
+        return "Some errors happen with pyspark. " + str(e), 500
+
+    try:
+        mongo_db  = mongo_client['recommendations']
+        mongo_col = mongo_db[save_collection]
+        mongo_col.drop()
+        mongo_col = mongo_db[save_collection]
+        mongo_col.insert_many(recommendations)
+    except Exception as e:
+        print(str(e))
+        return "Failed to write to MongoDB. " + str(e), 500
     
+    return 'ok'

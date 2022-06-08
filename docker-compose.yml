@@ -6,6 +6,11 @@ services:
     build: ./web/flask
     container_name: datafabric-flask
     hostname: datafabric-flask
+    depends_on:
+      - redis
+      - mysql
+      - mongo
+      - recommender
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.2
