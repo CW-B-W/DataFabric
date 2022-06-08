@@ -40,7 +40,9 @@ def train():
     try:
         max_iter = request.args.get('max_iter', default=10, type=int)
         rank     = request.args.get('rank', default=10, type=int)
-        save_collection = request.args.get('save_collection', default="default_recommendation", type=str)
+        save_collection  = request.args.get('save_collection', default="default_recommendation", type=str)
+        implicit_prefs   = request.args.get('implicit_prefs', default='false', type=str)
+        implicit_prefs   = True if implicit_prefs.lower() == 'true' else False
     except Exception as e:
         print(str(e))
         return "Failed to parse arguments. " + str(e), 500
@@ -53,9 +55,10 @@ def train():
         mongo_col = mongo_db['ratings']
 
         rating_list = [] # (user, item, rating)
-        for entry in mongo_col.find({}, {'_id': 0, 'user': 1, 'catalog_ratings': 1}):
-            for item in entry['catalog_ratings']:
-                rating_list.append( (int(entry['user']), int(item), int(entry['catalog_ratings'][item])) )
+        rating_colname = 'catalog_views' if implicit_prefs else 'catalog_ratings'
+        for entry in mongo_col.find({}, {'_id': 0, 'user': 1, rating_colname: 1}):
+            for item in entry[rating_colname]:
+                rating_list.append( (int(entry['user']), int(item), int(entry[rating_colname][item])) )
     except Exception as e:
         print(str(e))
         return "Failed to read from MongoDB. " + str(e), 500
@@ -77,7 +80,7 @@ def train():
         X_train = df
 
         # training the model
-        als = ALS(rank=rank, maxIter=max_iter, seed=0, nonnegative=True)
+        als = ALS(rank=rank, maxIter=max_iter, seed=0, nonnegative=True, implicitPrefs=implicit_prefs)
         model = als.fit(X_train.select(["user", "item", "rating"]))
 
         # predictions = model.transform(X_test.select(["user", "item"]))
