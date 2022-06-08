@@ -120,8 +120,8 @@ def main():
                 CREATE TABLE CatalogManager (
                     ID              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     CatalogName     VARCHAR(50),
-                    TableMembers    TEXT,
                     TableIds        TEXT,
+                    TableMembers    TEXT,
                     Keywords        TEXT,
                     Description     VARCHAR(300),
                     ViewCount       INT,

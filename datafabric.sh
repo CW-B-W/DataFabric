@@ -50,6 +50,7 @@ function generate_test_data() {
     if [[ "$4" == "1" ]]; then
         gen_rating="-r"
     fi
+    docker exec -it datafabric-flask python3 /flask-share/initialize_datafabric.py
     docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
 }
 

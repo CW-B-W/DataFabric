@@ -5,6 +5,9 @@ import argparse
 from tqdm import tqdm
 import time
 
+from DatafabricManager import TableManager
+from DatafabricManager import CatalogManager
+
 table_info_idx = 1
 column_cnt     = 0
 def new_random_table_info():
@@ -37,8 +40,8 @@ def new_random_catalog(table_info_list):
     catalog = {
         'ID'              : catalog_idx,
         'CatalogName'     : f'Catalog{catalog_idx}',
-        'TableMembers'    : [],
         'TableIds'        : [],
+        'TableMembers'    : [],
         'Keywords'        : [],
         'Description'     : f'This is Catalog{catalog_idx}',
         'ViewCount'       : random.randint(0, 100),
@@ -71,12 +74,8 @@ def create_testdata_table_random(table_info):
         "db": "testdata",
         "charset": "utf8"
     }
-    columns_full = table_info['Columns'].split(',')
-    column_create_str = ''
-    for c in columns_full:
-        column_name = c.split('@')[-1]
-        column_create_str += f'{column_name} TEXT,'
-    column_create_str = column_create_str[:-1]
+
+    column_create_str = ','.join([f'{column_name} TEXT' for column_name in table_info['Columns'].split(',')])
 
     try:
         conn = pymysql.connect(**db_settings)
@@ -91,9 +90,6 @@ def create_testdata_table_random(table_info):
                 );
             """
             cursor.execute(command)
-        conn.commit()
-
-        with conn.cursor() as cursor:
             for i in range(50):
                 command = f"""
                     INSERT INTO {table_info['TableName']} VALUES (
@@ -115,107 +111,9 @@ def create_testdata_table_random(table_info):
     except Exception as ex:
         print(ex)
 
-def create_table_info_table(table_info_list):
-    db_settings = {
-        "host": "datafabric-mysql",
-        "port": 3306,
-        "user": "root",
-        "password": "my-secret-pw",
-        "db": "datafabric",
-        "charset": "utf8"
-    }
-    try:
-        conn = pymysql.connect(**db_settings)
-        with conn.cursor() as cursor:
-            command = f"""
-                DROP TABLE IF EXISTS TableInfo;
-            """
-            cursor.execute(command)
-            command = f"""
-                CREATE TABLE TableInfo (
-                    ID              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    Connection      VARCHAR(100),
-                    DBMS            VARCHAR(20),
-                    DB              VARCHAR(100),
-                    TableName       VARCHAR(100),
-                    Columns         TEXT
-                );
-            """
-            cursor.execute(command)
-        conn.commit()
+def generate_catalogs(n_table, n_catalog):
+    print("[Generating catalogs testdata]")
 
-        for table_info in tqdm(table_info_list):
-            with conn.cursor() as cursor:
-                command = f"""
-                    INSERT INTO TableInfo VALUES (
-                        NULL,
-                        "{table_info['Connection']}",
-                        "{table_info['DBMS']}",
-                        "{table_info['DB']}",
-                        "{table_info['TableName']}",
-                        "{table_info['Columns']}"
-                    );
-                """
-                cursor.execute(command)
-            conn.commit()
-    except Exception as ex:
-        print(ex)
-
-def create_catalog_table(catalog_list):
-    db_settings = {
-        "host": "datafabric-mysql",
-        "port": 3306,
-        "user": "root",
-        "password": "my-secret-pw",
-        "db": "datafabric",
-        "charset": "utf8"
-    }
-    try:
-        conn = pymysql.connect(**db_settings)
-        with conn.cursor() as cursor:
-            command = f"""
-                DROP TABLE IF EXISTS CatalogManager;
-            """
-            cursor.execute(command)
-            command = f"""
-                CREATE TABLE CatalogManager (
-                    ID              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    CatalogName     VARCHAR(50),
-                    TableMembers    TEXT,
-                    TableIds        TEXT,
-                    Keywords        TEXT,
-                    Description     VARCHAR(300),
-                    ViewCount       INT,
-                    UsedCount       INT,
-                    CatalogUpvote   INT,
-                    CatalogDownvote INT
-                );
-            """
-            cursor.execute(command)
-        conn.commit()
-
-        for catalog in tqdm(catalog_list):
-            with conn.cursor() as cursor:
-                command = f"""
-                    INSERT INTO CatalogManager VALUES (
-                        NULL,
-                        "{catalog['CatalogName']}",
-                        "{catalog['TableMembers']}",
-                        "{catalog['TableIds']}",
-                        "{catalog['Keywords']}",
-                        "{catalog['Description']}",
-                        {catalog['ViewCount']},
-                        {catalog['UsedCount']},
-                        {catalog['CatalogUpvote']},
-                        {catalog['CatalogUpvote']}
-                    );
-                """
-                cursor.execute(command)
-            conn.commit()
-    except Exception as ex:
-        print(ex)
-
-def create_databases():
     db_settings = {
         "host": "datafabric-mysql",
         "port": 3306,
@@ -226,15 +124,6 @@ def create_databases():
     try:
         conn = pymysql.connect(**db_settings)
         with conn.cursor() as cursor:
-            command = f"""
-                DROP DATABASE IF EXISTS datafabric;
-            """
-            cursor.execute(command)
-            command = f"""
-                CREATE DATABASE datafabric;
-            """
-            cursor.execute(command)
-
             command = f"""
                 DROP DATABASE IF EXISTS testdata;
             """
@@ -243,18 +132,9 @@ def create_databases():
                 CREATE DATABASE testdata;
             """
             cursor.execute(command)
-        conn.commit()
-    except Exception as ex:
-        print(ex)
-
-def generate_catalogs(n_table, n_catalog):
-    print("[Generating catalogs testdata]")
-
-    print("Creating databases")
-    create_databases()
-    print("Finished!")
+    except Exception as e:
+        print(e)
     
-
     table_info_list = []
     print("Generating tables")
     for i in tqdm(range(n_table)):
@@ -262,15 +142,38 @@ def generate_catalogs(n_table, n_catalog):
         create_testdata_table_random(table_info_list[-1])
     print("Finished!")
 
-    print("Creating TableInfo table")
-    create_table_info_table(table_info_list)
+    print("Adding into TableInfo table")
+    for i in tqdm(range(len(table_info_list))):
+        table_info = table_info_list[i]
+        TableManager.add_table_info(
+            table_info['Connection'],
+            table_info['DBMS'],
+            table_info['DB'],
+            table_info['TableName'],
+            table_info['Columns']
+        )
     print("Finished!")
 
-    print("Creating CatalogManager table")
+    print("Generating catalogs")
     catalog_list = []
     for i in tqdm(range(n_catalog)):
         catalog_list.append(new_random_catalog(table_info_list))
-    create_catalog_table(catalog_list)
+    print("Finished!")
+
+    print("Adding into CatalogManager table")
+    for i in tqdm(range(len(catalog_list))):
+        catalog = catalog_list[i]
+        CatalogManager.add_catalog(
+            catalog['CatalogName'],
+            catalog['TableIds'],
+            catalog['TableMembers'],
+            catalog['Keywords'],
+            catalog['Description'],
+            catalog['ViewCount'],
+            catalog['UsedCount'],
+            catalog['CatalogUpvote'],
+            catalog['CatalogDownvote'],
+        )
     print("Finished!")
 
     return catalog_list
