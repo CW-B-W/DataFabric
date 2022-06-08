@@ -25,6 +25,10 @@ $(document).ready(function (){
         querySearch(currentSearch, currentPage-1);
     });
 
+    $("#Logout").click(function (e) {
+        logout();
+    });
+
     queryRecommendations();
 });
 
@@ -203,4 +207,20 @@ function setTableContent(table, tableContent) {
 
     table.append(thead);
     table.append(tbody);
+}
+
+function logout() {
+    $.ajax({
+        "type": "GET",
+        "dataType": "json",
+        "contentType": "application/json",
+        "url": `/logout`,
+        "timeout": 60000,
+        success: function(result) {
+            location.href = '/';
+        },
+        error: function(jqXHR, JQueryXHR, textStatus) {
+            location.href = '/';
+        }
+    });
 }

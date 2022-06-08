@@ -135,6 +135,12 @@ def login():
     except Exception as e:
         return str(e), 500
 
+@app.route('/logout')
+def logout():
+    if 'user_id' in session:
+        del session['user_id']
+    return redirect(url_for('login'))
+
 @app.route('/searchhints')
 def searchhints():
     try:
