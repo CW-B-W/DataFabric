@@ -5,6 +5,8 @@ import argparse
 from tqdm import tqdm
 import time
 
+from DatafabricManager import UserManager
+
 def create_mysql_database(db, replace=True):
     db_settings = {
         "host": "datafabric-mysql",
@@ -64,7 +66,6 @@ def create_mongo_database(db, replace=True):
 
 def create_mongo_collection(db, collection, replace=True):
     myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
-    myclient.drop_database(db)
     mydb = myclient[db]
     if replace:
         if collection in mydb.list_collection_names():
@@ -72,13 +73,8 @@ def create_mongo_collection(db, collection, replace=True):
     mycol = mydb[collection]
 
 def create_user_admin():
-    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
-    mydb = myclient['user_info']
-    mycol = mydb['user_info']
-    mycol.drop()
-    mycol = mydb['user_info']
-    mycol.insertOne({
-        'id'       : f'0',
+    UserManager.add_user({
+        'id'       : 0,
         'username' : f'admin',
         'password' : f'admin',
         'db_account' : {
@@ -100,9 +96,9 @@ def create_user_admin():
 def main():
     print("[Creating MySQL databases]")
     
-    print("Creating database 'datafabric'")
+    print("Creating MySQL database 'datafabric'")
     create_mysql_database('datafabric')
-    print("Creating table 'datafabric.TableInfo'")
+    print("Creating MySQL table 'datafabric.TableInfo'")
     create_mysql_table('datafabric', 'TableInfo', 
             f"""
                 CREATE TABLE TableInfo (
@@ -114,7 +110,7 @@ def main():
                     Columns         TEXT
                 );
             """)
-    print("Creating table 'datafabric.CatalogManager'")
+    print("Creating MySQL table 'datafabric.CatalogManager'")
     create_mysql_table('datafabric', 'CatalogManager', 
             f"""
                 CREATE TABLE CatalogManager (
@@ -131,9 +127,9 @@ def main():
                 );
             """)
 
-    print("Creating database 'datafabric_transaction'")
+    print("Creating MySQL database 'datafabric_transaction'")
     create_mysql_database('datafabric_transaction')
-    print("Creating table 'datafabric_transaction.TransactionLogs'")
+    print("Creating MySQL table 'datafabric_transaction.TransactionLogs'")
     create_mysql_table('datafabric_transaction', 'TransactionLogs', 
             f"""
                 CREATE TABLE TransactionLogs (
@@ -147,6 +143,18 @@ def main():
                     Datetime   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 );
             """)
+
+    print("[Creating MongoDB databases]")
+    print("Creating database 'datafabric'")
+    create_mongo_database('datafabric')
+
+    print("Creating collection 'datafabric.user_info'")
+    create_mongo_collection('datafabric', 'user_info')
+    print("Creating collection 'datafabric.ratings'")
+    create_mongo_collection('datafabric', 'ratings')
+
+    print("Creating user admin")
+    create_user_admin()
     
     
     

@@ -53,9 +53,9 @@ def train():
         mongo_col = mongo_db['ratings']
 
         rating_list = [] # (user, item, rating)
-        for entry in mongo_col.find({}, {'_id': 0, 'user': 1, 'catalog_rating': 1}):
-            for item in entry['catalog_rating']:
-                rating_list.append( (int(entry['user']), int(item), int(entry['catalog_rating'][item])) )
+        for entry in mongo_col.find({}, {'_id': 0, 'user': 1, 'catalog_ratings': 1}):
+            for item in entry['catalog_ratings']:
+                rating_list.append( (int(entry['user']), int(item), int(entry['catalog_ratings'][item])) )
     except Exception as e:
         print(str(e))
         return "Failed to read from MongoDB. " + str(e), 500

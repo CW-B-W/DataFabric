@@ -42,14 +42,35 @@ class MongoDB:
         if self.__connect_mongo() == False:
             raise "Failed to connect Mongo."
         collection = self.__mongo_db[collection_name]
-        _id = value['_id']
-        del value['_id']
-        value = {
+        _id = None
+        if '_id' in value:
+            _id = value['_id']
+            del value['_id']
+        set_value = {
             "$set" : value
         }
-        result = collection.update_one(query, value, upsert=False)
-        value['_id'] = _id
+        result = collection.update_one(query, set_value, upsert=False)
+        if _id is not None:
+            value['_id'] = _id
         return result
+
+    def insert(self, collection_name: str, doc: dict):
+        if self.__connect_mongo() == False:
+            raise "Failed to connect Mongo."
+        collection = self.__mongo_db[collection_name]
+        collection.insert_one(doc)
+
+    def delete(self, collection_name: str, query: dict):
+        if self.__connect_mongo() == False:
+            raise "Failed to connect Mongo."
+        collection = self.__mongo_db[collection_name]
+        collection.delete_one(query)
+
+    def collection_size(self, collection_name: str) -> int:
+        if self.__connect_mongo() == False:
+            raise "Failed to connect Mongo."
+        collection = self.__mongo_db[collection_name]
+        return collection.count_documents({})
     
     @staticmethod
     def parse_bson(data):

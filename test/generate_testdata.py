@@ -7,6 +7,7 @@ import time
 
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
+from DatafabricManager import UserManager
 
 table_info_idx = 1
 column_cnt     = 0
@@ -228,20 +229,9 @@ def new_random_user_info():
 def generate_users(n_user):
     print("[Generating users testdata]")
 
-    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
-
-    print("Creating databases")
-    myclient.drop_database('datafabric')
-    mydb = myclient['datafabric']
-    print("Finished!")
-    
-
     user_info_list = []
     print("Generating users")
-    mycol = mydb['user_info']
-    mycol.drop()
-    mycol = mydb['user_info']
-    user_info_list.append({
+    admin_user = {
         'id'       : 0,
         'username' : f'admin',
         'password' : f'admin',
@@ -272,10 +262,12 @@ def generate_users(n_user):
         'action_permission': {
             '*': True
         }
-    })
+    }
+    user_info_list.append(admin_user)
+    UserManager.set_user_info(0, admin_user)
     for i in tqdm(range(n_user)):
         user_info_list.append(new_random_user_info())
-    x = mycol.insert_many(user_info_list)
+        UserManager.add_user(user_info_list[-1])
     print("Finished!")
 
     return user_info_list
@@ -283,34 +275,33 @@ def generate_users(n_user):
 def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
     rating = {
         'user' : user['id'],
-        'catalog_rating' : {
+        'catalog_ratings' : {
 
         }
     }
 
     sampled_catalogs = random.sample(catalog_list, random.randint(0, int(len(catalog_list)*rate_ratio)))
     for catalog in sampled_catalogs:
-        rating['catalog_rating'][str(catalog['ID'])] = random.randint(0, 5)
+        rating['catalog_ratings'][str(catalog['ID'])] = random.randint(0, 5)
 
     return rating
 
 def generate_ratings(user_info_list, catalog_list):
-    print("[Generating ratings testdata]")
-    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
-
-    print("Acquiring databases")
-    mydb = myclient['datafabric']
-    print("Finished!")
-
     user_rating_list = []
-    print("Generating ratings")
-    mycol = mydb['ratings']
-    mycol.drop()
-    mycol = mydb['ratings']
 
     for user in user_info_list:
         user_rating_list.append(new_random_rating(user, catalog_list))
-    x = mycol.insert_many(user_rating_list)
+    
+    for rating in user_rating_list:
+        for key in rating['catalog_ratings']:
+            catalog_id = int(key)
+            score      = float(rating['catalog_ratings'][key])
+            UserManager.set_rating(rating['user'], catalog_id, score)
+
+    for user in user_info_list:
+        for catalog in catalog_list:
+            UserManager.set_viewcount(int(user['id']), int(catalog['ID']), random.randint(0, 10))
+
     print("Finished!")
 
     return user_rating_list
