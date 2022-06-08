@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 import time
 
-table_info_idx = 0
+table_info_idx = 1
 column_cnt     = 0
 def new_random_table_info():
     global table_info_idx
@@ -28,7 +28,7 @@ def new_random_table_info():
     table_info_idx += 1
     return table_info
 
-catalog_idx = 0
+catalog_idx = 1
 def new_random_catalog(table_info_list):
     global catalog_idx
     n_table = random.randint(2, 10)
