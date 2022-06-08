@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from gettext import Catalog
 import json
 import sys, os, time
 import random
