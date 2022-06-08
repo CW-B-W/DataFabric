@@ -122,7 +122,6 @@ def main():
                     CatalogName     VARCHAR(50),
                     TableMembers    TEXT,
                     TableIds        TEXT,
-                    ColumnMembers   TEXT,
                     Keywords        TEXT,
                     Description     VARCHAR(300),
                     ViewCount       INT,

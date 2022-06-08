@@ -39,7 +39,6 @@ def new_random_catalog(table_info_list):
         'CatalogName'     : f'Catalog{catalog_idx}',
         'TableMembers'    : [],
         'TableIds'        : [],
-        'ColumnMembers'   : [],
         'Keywords'        : [],
         'Description'     : f'This is Catalog{catalog_idx}',
         'ViewCount'       : random.randint(0, 100),
@@ -55,11 +54,9 @@ def new_random_catalog(table_info_list):
         catalog['TableIds'].append(f"{table_info['ID']}")
         for catalog_name in table_info['Columns'].split(','):
             catalog['Keywords'].append(catalog_name)
-            catalog['ColumnMembers'].append(f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']}@{catalog_name}")
 
     catalog['TableMembers']  = ','.join(catalog['TableMembers'])
     catalog['TableIds']      = ','.join(catalog['TableIds'])
-    catalog['ColumnMembers'] = ','.join(catalog['ColumnMembers'])
     catalog['Keywords']      = ','.join(catalog['Keywords'])
 
     catalog_idx += 1
@@ -186,7 +183,6 @@ def create_catalog_table(catalog_list):
                     CatalogName     VARCHAR(50),
                     TableMembers    TEXT,
                     TableIds        TEXT,
-                    ColumnMembers   TEXT,
                     Keywords        TEXT,
                     Description     VARCHAR(300),
                     ViewCount       INT,
@@ -206,7 +202,6 @@ def create_catalog_table(catalog_list):
                         "{catalog['CatalogName']}",
                         "{catalog['TableMembers']}",
                         "{catalog['TableIds']}",
-                        "{catalog['ColumnMembers']}",
                         "{catalog['Keywords']}",
                         "{catalog['Description']}",
                         {catalog['ViewCount']},

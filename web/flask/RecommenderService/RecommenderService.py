@@ -15,10 +15,7 @@ def random_recommend(n: int = 50) -> tuple:
 def get_catalogs_with_ids(ids: list) -> list:
     if len(ids) <= 0:
         return []
-    ids_str = ''
-    for id in ids:
-        ids_str += str(id) + ','
-    ids_str = ids_str[:-1]
+    ids_str = ','.join([str(x) for x in ids])
     result = mysqldb.query(
         f"SELECT * FROM CatalogManager "
         f"WHERE ID IN ({ids_str});"
