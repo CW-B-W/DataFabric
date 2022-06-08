@@ -126,7 +126,6 @@ def main():
                     Description     VARCHAR(300),
                     ViewCount       INT,
                     UsedCount       INT,
-                    PopularTop3     VARCHAR(300),
                     CatalogUpvote   INT,
                     CatalogDownvote INT
                 );

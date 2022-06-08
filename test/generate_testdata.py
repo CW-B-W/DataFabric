@@ -21,9 +21,9 @@ def new_random_table_info():
     dbms = table_info['DBMS']
     db   = table_info['DB']
     tbl  = table_info['TableName']
-    table_info['Columns'] += f'{dbms}@{db}@{tbl}@id'
+    table_info['Columns'] += f'id'
     for i in range(10):
-        table_info['Columns'] += f',{dbms}@{db}@{tbl}@Column{column_cnt}'
+        table_info['Columns'] += f',Column{column_cnt}'
         column_cnt += 1
     table_info_idx += 1
     return table_info
@@ -43,7 +43,6 @@ def new_random_catalog(table_info_list):
         'Description'     : f'This is Catalog{catalog_idx}',
         'ViewCount'       : random.randint(0, 100),
         'UsedCount'       : 0,
-        'PopularTop3'     : '',
         'CatalogUpvote'   : random.randint(0, 100),
         'CatalogDownvote' : random.randint(0, 100)
     }
@@ -51,16 +50,13 @@ def new_random_catalog(table_info_list):
     for table_info in sampled:
         catalog['TableMembers']  += f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']},"
         catalog['TableIds']      += f"{table_info['ID']},"
-        catalog['ColumnMembers'] += f"{table_info['Columns']},"
+        for catalog_name in table_info['Columns'].split(','):
+            catalog['ColumnMembers'] += f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']}@{catalog_name},"
     catalog['TableMembers']  = catalog['TableMembers'][:-1]
     catalog['TableIds']      = catalog['TableIds'][:-1]
     catalog['ColumnMembers'] = catalog['ColumnMembers'][:-1]
 
     columns     = catalog['ColumnMembers'].split(',')
-    populartop3 = random.sample(columns, 3)
-    for col in populartop3:
-        catalog['PopularTop3'] += col + ','
-    catalog['PopularTop3'] = catalog['PopularTop3'][:-1]
 
     catalog_idx += 1
     return catalog
@@ -190,7 +186,6 @@ def create_catalog_table(catalog_list):
                     Description     VARCHAR(300),
                     ViewCount       INT,
                     UsedCount       INT,
-                    PopularTop3     VARCHAR(300),
                     CatalogUpvote   INT,
                     CatalogDownvote INT
                 );
@@ -198,24 +193,23 @@ def create_catalog_table(catalog_list):
             cursor.execute(command)
         conn.commit()
 
-        with conn.cursor() as cursor:
-            command = """
-                INSERT INTO CatalogManager VALUES (
-                    NULL,
-                    "期末考成績分析",
-                    "MySQL@ScoreDb@Final2020,MySQL@ScoreDb@Final2021",
-                    "12,13",
-                    "MySQL@ScoreDb@Final2020@EnglishScore,MySQL@ScoreDb@Final2020@ChineseScore,MySQL@ScoreDb@Final2020@MathScore,MySQL@ScoreDb@Final2021@EnglishScore,MySQL@ScoreDb@Final2021@ChineseScore,MySQL@ScoreDb@Final2021@MathScore",
-                    "歷年期末考成績分析",
-                    36,
-                    27,
-                    "MySQL@ScoreDb@Final2020@EnglishScore,MySQL@ScoreDb@Final2020@ChineseScore,MySQL@ScoreDb@Final2020@MathScore",
-                    12,
-                    2
-                );
-            """
-            cursor.execute(command)
-        conn.commit()
+        # with conn.cursor() as cursor:
+        #     command = """
+        #         INSERT INTO CatalogManager VALUES (
+        #             NULL,
+        #             "期末考成績分析",
+        #             "MySQL@ScoreDb@Final2020,MySQL@ScoreDb@Final2021",
+        #             "12,13",
+        #             "MySQL@ScoreDb@Final2020@EnglishScore,MySQL@ScoreDb@Final2020@ChineseScore,MySQL@ScoreDb@Final2020@MathScore,MySQL@ScoreDb@Final2021@EnglishScore,MySQL@ScoreDb@Final2021@ChineseScore,MySQL@ScoreDb@Final2021@MathScore",
+        #             "歷年期末考成績分析",
+        #             36,
+        #             27,
+        #             12,
+        #             2
+        #         );
+        #     """
+        #     cursor.execute(command)
+        # conn.commit()
 
         for catalog in tqdm(catalog_list):
             with conn.cursor() as cursor:
@@ -229,7 +223,6 @@ def create_catalog_table(catalog_list):
                         "{catalog['Description']}",
                         {catalog['ViewCount']},
                         {catalog['UsedCount']},
-                        "{catalog['PopularTop3']}",
                         {catalog['CatalogUpvote']},
                         {catalog['CatalogUpvote']}
                     );
