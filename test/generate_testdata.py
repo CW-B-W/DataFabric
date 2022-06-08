@@ -37,9 +37,10 @@ def new_random_catalog(table_info_list):
     catalog = {
         'ID'              : catalog_idx,
         'CatalogName'     : f'Catalog{catalog_idx}',
-        'TableMembers'    : '',
-        'TableIds'        : '',
-        'ColumnMembers'   : '',
+        'TableMembers'    : [],
+        'TableIds'        : [],
+        'ColumnMembers'   : [],
+        'Keywords'        : [],
         'Description'     : f'This is Catalog{catalog_idx}',
         'ViewCount'       : random.randint(0, 100),
         'UsedCount'       : 0,
@@ -47,16 +48,19 @@ def new_random_catalog(table_info_list):
         'CatalogDownvote' : random.randint(0, 100)
     }
 
+    catalog['Keywords'].append(catalog['CatalogName'])
     for table_info in sampled:
-        catalog['TableMembers']  += f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']},"
-        catalog['TableIds']      += f"{table_info['ID']},"
+        catalog['Keywords'].append(table_info['TableName'])
+        catalog['TableMembers'].append(f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']}")
+        catalog['TableIds'].append(f"{table_info['ID']}")
         for catalog_name in table_info['Columns'].split(','):
-            catalog['ColumnMembers'] += f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']}@{catalog_name},"
-    catalog['TableMembers']  = catalog['TableMembers'][:-1]
-    catalog['TableIds']      = catalog['TableIds'][:-1]
-    catalog['ColumnMembers'] = catalog['ColumnMembers'][:-1]
+            catalog['Keywords'].append(catalog_name)
+            catalog['ColumnMembers'].append(f"{table_info['DBMS']}@{table_info['DB']}@{table_info['TableName']}@{catalog_name}")
 
-    columns     = catalog['ColumnMembers'].split(',')
+    catalog['TableMembers']  = ','.join(catalog['TableMembers'])
+    catalog['TableIds']      = ','.join(catalog['TableIds'])
+    catalog['ColumnMembers'] = ','.join(catalog['ColumnMembers'])
+    catalog['Keywords']      = ','.join(catalog['Keywords'])
 
     catalog_idx += 1
     return catalog
@@ -183,6 +187,7 @@ def create_catalog_table(catalog_list):
                     TableMembers    TEXT,
                     TableIds        TEXT,
                     ColumnMembers   TEXT,
+                    Keywords        TEXT,
                     Description     VARCHAR(300),
                     ViewCount       INT,
                     UsedCount       INT,
@@ -193,24 +198,6 @@ def create_catalog_table(catalog_list):
             cursor.execute(command)
         conn.commit()
 
-        # with conn.cursor() as cursor:
-        #     command = """
-        #         INSERT INTO CatalogManager VALUES (
-        #             NULL,
-        #             "期末考成績分析",
-        #             "MySQL@ScoreDb@Final2020,MySQL@ScoreDb@Final2021",
-        #             "12,13",
-        #             "MySQL@ScoreDb@Final2020@EnglishScore,MySQL@ScoreDb@Final2020@ChineseScore,MySQL@ScoreDb@Final2020@MathScore,MySQL@ScoreDb@Final2021@EnglishScore,MySQL@ScoreDb@Final2021@ChineseScore,MySQL@ScoreDb@Final2021@MathScore",
-        #             "歷年期末考成績分析",
-        #             36,
-        #             27,
-        #             12,
-        #             2
-        #         );
-        #     """
-        #     cursor.execute(command)
-        # conn.commit()
-
         for catalog in tqdm(catalog_list):
             with conn.cursor() as cursor:
                 command = f"""
@@ -220,6 +207,7 @@ def create_catalog_table(catalog_list):
                         "{catalog['TableMembers']}",
                         "{catalog['TableIds']}",
                         "{catalog['ColumnMembers']}",
+                        "{catalog['Keywords']}",
                         "{catalog['Description']}",
                         {catalog['ViewCount']},
                         {catalog['UsedCount']},

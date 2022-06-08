@@ -123,6 +123,7 @@ def main():
                     TableMembers    TEXT,
                     TableIds        TEXT,
                     ColumnMembers   TEXT,
+                    Keywords        TEXT,
                     Description     VARCHAR(300),
                     ViewCount       INT,
                     UsedCount       INT,
