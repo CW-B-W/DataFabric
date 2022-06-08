@@ -179,17 +179,22 @@ def recommend():
         return redirect(url_for('login'))
 
     try:
-        query_id = f"user={session['user_id']}&recommend=random"
-        result = cache_db.get_json(query_id)
-        if result is None:
-            result = RecommenderService.recommend(session['user_id'])
-            cache_db.set_json(query_id, result, 30*60)
+        # query_id = f"user={session['user_id']}&recommend=random"
+        # result = cache_db.get_json(query_id)
+        # if result is None:
+        #     result = RecommenderService.recommend(session['user_id'])
+        #     cache_db.set_json(query_id, result, 30*60)
 
+        result, ratings = RecommenderService.recommend(session['user_id'])
         # return top10 results
-        result = result[:10]
+        result  = result[:10]
+        ratings = ratings[:10]
 
         transaction_logging.add_transaction('recommend', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
-        return json.dumps(result)
+        return json.dumps({
+            'items' : result,
+            'ratings' : ratings
+        })
     except Exception as e:
         return str(e), 500
 

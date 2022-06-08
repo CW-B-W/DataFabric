@@ -4,12 +4,13 @@ from InternalDB.MongoDB import MongoDB
 mysqldb = MySQLDB('datafabric')
 mongodb = MongoDB('recommendations')
 
-def random_recommend(n: int = 50) -> list:
+def random_recommend(n: int = 50) -> tuple:
     result = mysqldb.query(
         f"SELECT * FROM CatalogManager "
         f"ORDER BY RAND() LIMIT {n};"
     )
-    return result
+    ratings = [-1 for _ in range(n)]
+    return result, ratings
 
 def get_catalogs_with_ids(ids: list) -> list:
     if len(ids) <= 0:
@@ -24,7 +25,7 @@ def get_catalogs_with_ids(ids: list) -> list:
     )
     return result
 
-def get_recommendation(user_id: int, n_item_max: int = 50, collection: str = 'default_recommendation') -> list:
+def get_recommendation(user_id: int, n_item_max: int = 50, collection: str = 'default_recommendation') -> tuple:
     """Get recommendations from MongoDB.recommendations
 
     Args:
@@ -33,7 +34,9 @@ def get_recommendation(user_id: int, n_item_max: int = 50, collection: str = 'de
         collection (str): retrieve from which mongodb collection
 
     Returns:
-        list: List of recommended catalogs (descending by rating)
+        tuple:
+            [0] (list): List of recommended catalogs (descending by rating)
+            [1] (list): rating for items in [0]
     """
     result = mongodb.query(collection, {'user': user_id})
     try:
@@ -49,24 +52,29 @@ def get_recommendation(user_id: int, n_item_max: int = 50, collection: str = 'de
         catalogs = get_catalogs_with_ids(rec_ids)
 
         # sort results by score
-        catalogs.sort(key=lambda item: rec_ratings[str(item['ID'])])
+        catalogs.sort(key=lambda item: rec_ratings[str(item['ID'])], reverse=True)
 
-        return catalogs
+        return catalogs, [rec_ratings[str(item['ID'])] for item in catalogs]
     except Exception as e:
-        return []
+        return [],[]
 
 
-def recommend(user_id: int, n_item_max: int = 50, fill_with_random = False) -> list:
+def recommend(user_id: int, n_item_max: int = 50, fill_with_random: bool = False) -> tuple:
     """Recommend n items for user_id
 
     Args:
         user_id (int): user id
         n_item_max (int, optional): Number of items to return. Defaults to 50.
+        fill_with_random (bool, optional): Whether to fill the result list with random if n_item < n_item_max. Defaults to False.
 
     Returns:
-        list: list containing the recommended catalog_info
+        tuple:
+            [0] (list): list containing the recommended catalog_info
+            [1] (list): rating for items in [0]
     """
-    result = get_recommendation(user_id)
-    if fill_with_random and len(result) < n_item_max:
-        result += random_recommend(n_item_max-len(result))
-    return result
+    items, ratings = get_recommendation(user_id)
+    if fill_with_random and len(items) < n_item_max:
+        random_items, dummy_ratings = random_recommend(n_item_max-len(items))
+        items   += random_items
+        ratings += dummy_ratings
+    return items, ratings

@@ -36,12 +36,29 @@ function queryRecommendations() {
         "url": `/recommend`,
         "timeout": 1000,
         success: function(result) {
-            showSearchResults(result);
+            showRecommendResults(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
             console.warn("[querySearchHints] Connection Failed!");
         }
     });
+}
+
+function showRecommendResults(results) {
+    $("#SearchResults").empty();
+    items   = results['items']
+    ratings = results['ratings']
+    for (var i in items) {
+        var item = items[i];
+        var temp = document.getElementById("ResultItemTemplate");
+        var clon = $(temp.content.cloneNode(true));
+        clon.find("[name=CatalogName]").eq(0).text(`${item['CatalogName']} (score: ${ratings[i]})`);
+        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog_page?catalog_id=${item['ID']}`)
+        genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), item['TableMembers'], item['TableIds']);
+        clon.find("[name=Description]").eq(0).text(item['Description']);
+        $("#SearchResults").append(clon);
+    }
+    $('#CurrentPageLabel').text(`Page: ${currentPage.toString()}`);
 }
 
 function querySearchHints(text) {
