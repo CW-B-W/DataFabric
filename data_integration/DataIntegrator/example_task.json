@@ -1,0 +1,45 @@
+{
+    "task_id":"admin_test",
+    "task_list":[
+        {
+            "db":[
+                {
+                    "dbms":"mysql",
+                    "ip":"datafabric-mysql",
+                    "port":"3306",
+                    "username":"root",
+                    "password":"my-secret-pw",
+                    "db":"testdata",
+                    "table":"MyTable60",
+                    "key_names":["id","Column590"],
+                    "namemapping":{
+                        "id":"ID",
+                        "Column590":"COLUMN590"
+                    }
+                },
+                {
+                    "dbms":"mysql",
+                    "ip":"datafabric-mysql",
+                    "port":"3306",
+                    "username":"root",
+                    "password":"my-secret-pw",
+                    "db":"testdata",
+                    "table":"MyTable60",
+                    "key_names":["id","Column591"],
+                    "namemapping":{
+                        "id":"ID",
+                        "Column590":"COLUMN591"
+                    }
+                }
+            ],
+            "join_sql":"SELECT COALESCE(df0.ID, df1.ID) as ID, df0.COLUMN590 as COLUMN590, df1.COLUMN591 as COLUMN591 FROM df0 LEFT JOIN df1 ON df0.ID=df1.ID;",
+            "result":{
+                "columns":[
+                    "ID",
+                    "COLUMN590",
+                    "COLUMN591"
+                ]
+            }
+        }
+    ]
+}

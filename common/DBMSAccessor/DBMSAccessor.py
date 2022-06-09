@@ -33,25 +33,25 @@ def preview_table(
 
 def query_table(
         username: str, password: str,
-        ip: str, port, 
-        db: str, table: str, key_names: str, 
-        start_time: str, end_time: str, time_column: str) -> DataFrame:
-    """_summary_
+        ip: str, port, dbms: str, 
+        db: str, table: str, key_names: list, 
+        start_time: str = None, end_time: str = None, time_column: str = None) -> DataFrame:
+    """Query data from DBMS. Return pandas.DataFrame
 
     Args:
-        username (str): _description_
-        password (str): _description_
-        ip (str): _description_
-        port (_type_): _description_
-        db (str): _description_
-        table (str): _description_
-        key_names (str): _description_
-        start_time (str): _description_
-        end_time (str): _description_
-        time_column (str): _description_
+        username (str): Username of DBMS
+        password (str): Password of DBMS
+        ip (str): IP/Hostname of DBMS
+        port (str): Port of DBMS. Note that for Oracle it can be like '1521/sid'
+        db (str): Desired DB in DBMS
+        table (str): Desired Table in DB
+        key_names (list): Desired Keys(Columns) in Table
+        start_time (str, optional): Query start time. Defaults to None.
+        end_time (str, optional): Query end time. Defaults to None.
+        time_column (str, optional): The column of start_time, end_time. Defaults to None.
 
     Returns:
-        DataFrame: _description_
+        DataFrame: pandas.DataFrame containing requested data
     """
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)

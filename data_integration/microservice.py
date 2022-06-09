@@ -3,6 +3,8 @@ import urllib.parse
 import json
 import time
 
+from DataIntegrator import DataIntegrator
+
 def main():
     try_times = 10
     while try_times > 0:
@@ -20,13 +22,10 @@ def main():
     channel.queue_declare(queue='task_req')
 
     def callback(ch, method, properties, body):
-        print(body)
-        sys.stdout.flush()
         body = urllib.parse.unquote(body.decode('utf-8'))
-        print(" [x] Received %s" % body)
         try:
-            print(json.loads(body))
-            sys.stdout.flush()
+            task_dict = json.loads(body)
+            DataIntegrator.integrate(task_dict)
         except:
             pass
 
