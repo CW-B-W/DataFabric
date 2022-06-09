@@ -1,27 +1,29 @@
 from sqlalchemy import create_engine
 
+from .MySQLAccessor.MySQLAccessor import *
+
+
 def preview_table(
     username: str, password: str, 
     ip: str, port: str, dbms: str, 
     db: str, table: str, limit: int = 5
-) -> dict:
+) -> list:
+    """The abstract function for calling functions of desired DBMS
+
+    Args:
+        username (str): Username of DBMS
+        password (str): Password of DBMS
+        ip (str): IP/Hostname of DBMS
+        port (str): Port of DBMS. Note that for Oracle it can be like '1521/sid'
+        dbms (str): Name of DBMS, e.g. 'MySQL', will be converted to lowercase
+        db (str): Desired DB in DBMS
+        table (str): Desired Table in DB
+        limit (int, optional): Number of rows to return. Defaults to 5.
+
+    Returns:
+        list: List containing rows of requested data
+    """
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)
     # The target function name should be like such as 'preview_mysql(...)'
     return globals()[f'preview_{dbms}'](username, password, ip, port, db, table, limit)
-
-import pymysql
-def preview_mysql(username, password, ip, port, db, table, limit):
-    mysql_settings = {
-        "host": ip,
-        "port": int(port),
-        "user": username,
-        "password": password,
-        "db": db,
-        "charset": "utf8"
-    }
-    mysql_db = pymysql.connect(**mysql_settings)
-    cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
-    cursor.execute(f"SELECT * FROM {table} LIMIT {limit};")
-    result = cursor.fetchall()
-    return result
