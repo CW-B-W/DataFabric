@@ -3,7 +3,7 @@
 sudo ./datafabric.sh build
 sudo ./datafabric.sh start
 sudo docker exec -it datafabric-mysql mysql -p # login to activate MySQL. {assword: my-secret-pw
-sudo ./datafabric.sh generate_testdata 100 10 10  # 100 tables, 10 catalogs, 10 users
+sudo ./datafabric.sh generate_testdata 1000 200 50 1 # 1000 random_tables, 200 catalogs, 50 users, generate fake ratings
 ```
 Then connect to `{your_ip}:5000/`,  
 default account is `admin/admin`
@@ -12,6 +12,10 @@ default account is `admin/admin`
 Build the docker images
 ```bash
 sudo ./datafabric.sh build
+```
+Initialize datafabric
+```bash
+sudo ./datafabric.sh initialize
 ```
 Start the system
 ```bash

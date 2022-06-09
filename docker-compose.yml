@@ -14,7 +14,6 @@ services:
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.2
-    # depends_on:
     env_file:
       - ./web/flask/flask.env
     ports:
@@ -79,6 +78,8 @@ services:
     build: ./recommender
     container_name: datafabric-recommender
     hostname: datafabric-recommender
+    depends_on:
+      - mongo
     user: root
     environment:
       GRANT_SUDO: "yes"

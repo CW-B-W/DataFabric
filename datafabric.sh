@@ -66,6 +66,7 @@ function initialize_datafabric() {
 function print_help() {
     echo -e "Usage example:"
     echo -e "\t./datafabric.sh help"
+    echo -e "\t./datafabric.sh initialize"
     echo -e "\t./datafabric.sh start"
     echo -e "\t./datafabric.sh stop"
     echo -e "\t./datafabric.sh restart"
