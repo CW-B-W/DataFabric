@@ -8,7 +8,8 @@ def preview_table(
     ip: str, port: str, dbms: str, 
     db: str, table: str, limit: int = 5
 ) -> list:
-    """The abstract function for calling functions of desired DBMS
+    """Request arbitrary records from DBMS for previewing.
+    This is the abstract function for calling functions of desired DBMS.
 
     Args:
         username (str): Username of DBMS
