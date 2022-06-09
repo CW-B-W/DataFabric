@@ -41,7 +41,7 @@ services:
         ipv4_address: 172.22.0.3
     mem_limit: 4096MB
     volumes:
-      - ./web/flask/redis-share:/data
+      - ./persistent_storage/redis:/data
 
   mysql:
     image: mysql:8.0.29
@@ -54,8 +54,8 @@ services:
       datafabric_network:
         ipv4_address: 172.22.0.4
     volumes:
-      - ./web/flask/mysql-share/mysql-data:/var/lib/mysql
-      - ./web/flask/mysql-share/conf:/etc/mysql/conf.d
+      - ./persistent_storage/mysql/mysql-data:/var/lib/mysql
+      - ./mysql/conf:/etc/mysql/conf.d
     mem_limit: 4096MB
 
   mongo:
@@ -69,8 +69,8 @@ services:
       datafabric_network:
         ipv4_address: 172.22.0.5
     volumes:
-      - ./web/flask/mongo-share/mongo-data:/data/db
-      - ./web/flask/mongo-share/conf:/data/configdb
+      - ./persistent_storage/mongo/mongo-data:/data/db
+      - ./persistent_storage/mongo/conf:/data/configdb
     mem_limit: 4096MB
 
   recommender:
@@ -90,6 +90,18 @@ services:
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.6
+
+  rabbitmq:
+    image: rabbitmq:3.9.10-management
+    container_name: datafabric-rabbitmq
+    hostname: datafabric-rabbitmq
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.7
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
+    mem_limit: 1024MB
 
 networks:
   datafabric_network:
