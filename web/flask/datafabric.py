@@ -237,11 +237,5 @@ def table_preview():
 
 @app.route('/train_recommender')
 def train_recommender():
-    max_iter = request.args.get('max_iter', default=10, type=int)
-    rank     = request.args.get('rank', default=10, type=int)
-    save_collection  = request.args.get('save_collection', default="default_recommendation", type=str)
-    implicit_prefs   = request.args.get('implicit_prefs', default='false', type=str)
-    implicit_prefs   = True if implicit_prefs.lower() == 'true' else False
-
     response = requests.get('http://datafabric-recommender:5000/train?' + request.query_string.decode())
     return response.text

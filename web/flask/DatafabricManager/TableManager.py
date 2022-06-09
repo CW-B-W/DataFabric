@@ -1,9 +1,10 @@
+from typing import Union
 from InternalDB.MySQLDB import MySQLDB
 
 mysqldb = MySQLDB('datafabric')
 
 def get_table_info(table_id: int) -> dict:
-    """Get the table info via table_id
+    """Get the table info with table_id
 
     Args:
         tableid (int): The id of the requested table
@@ -17,6 +18,29 @@ def get_table_info(table_id: int) -> dict:
         return result[0]
     except Exception as e:
         return None
+
+def get_multiple_tables_info(table_ids: list) -> list:
+    """Get the multiple table infos with multiple table ids
+
+    Args:
+        table_ids (list): List of table ids
+
+    Returns:
+        dict: List containing each requested table info. If table_id is not found, set to None in the list.
+    """
+    query_str = ','.join([str(id) for id in table_ids])
+    results = mysqldb.query(f"SELECT * FROM TableInfo WHERE ID IN ({query_str});")
+    l = []
+    for id in table_ids:
+        id_found = False
+        for result in results:
+            if result['ID'] == id:
+                l.append(result)
+                id_found = True
+                break
+        if id_found == False:
+            l.append(None)
+    return l
 
 def set_table_info(table_id: int, table_info: dict):
     """Write back the table_info with table_id into MySQL

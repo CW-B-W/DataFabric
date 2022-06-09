@@ -25,9 +25,9 @@ services:
       - ./web/flask/flask_config.json:/flask_config.json
       - ./web/flask/static:/static
       - ./web/flask/template:/template
-      - ./web/flask/InternalDB:/InternalDB
+      - ./common/InternalDB:/InternalDB
+      - ./common/DBMSAccessor:/DBMSAccessor
       - ./web/flask/DatafabricManager:/DatafabricManager
-      - ./web/flask/DBMSAccessor:/DBMSAccessor
       - ./web/flask/RecommenderService:/RecommenderService
       - ./test:/test
     mem_limit: 4096MB
