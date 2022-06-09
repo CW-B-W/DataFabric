@@ -37,8 +37,7 @@ RUN pip3 install setuptools wheel
 ADD requirements.txt /requirements.txt
 RUN pip3 install -r requirements.txt
 
-ADD entrypoint-flask.sh /entrypoint-flask.sh
-RUN chmod a+x /entrypoint-flask.sh
 ADD run.sh /run.sh
 RUN chmod a+x /run.sh
+
 CMD ["/run.sh"]

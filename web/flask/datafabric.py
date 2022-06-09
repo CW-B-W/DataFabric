@@ -4,6 +4,7 @@ import json
 import sys, os, time
 import random
 import requests
+import pika
 
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
@@ -13,6 +14,9 @@ transaction_logging = TransactionLogging('TransactionLogs')
 
 from InternalDB.RedisDB import RedisDB
 cache_db = RedisDB(db=0)
+
+from InternalMQ.RabbitMQ import RabbitMQ
+task_req_mq = RabbitMQ('task_req')
 
 from DBMSAccessor import DBMSAccessor
 
@@ -239,3 +243,8 @@ def table_preview():
 def train_recommender():
     response = requests.get('http://datafabric-recommender:5000/train?' + request.query_string.decode())
     return response.text
+
+@app.route('/test_mq')
+def test_mq():
+    task_req_mq.send_dict({'hello': 'world'})
+    return 'ok'

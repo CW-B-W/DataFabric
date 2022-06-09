@@ -11,6 +11,7 @@ services:
       - mysql
       - mongo
       - recommender
+      - rabbitmq
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.2
@@ -26,6 +27,7 @@ services:
       - ./web/flask/static:/static
       - ./web/flask/template:/template
       - ./common/InternalDB:/InternalDB
+      - ./common/InternalMQ:/InternalMQ
       - ./common/DBMSAccessor:/DBMSAccessor
       - ./web/flask/DatafabricManager:/DatafabricManager
       - ./web/flask/RecommenderService:/RecommenderService
@@ -90,6 +92,7 @@ services:
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.6
+    mem_limit: 4096MB
 
   rabbitmq:
     image: rabbitmq:3.9.10-management
@@ -102,6 +105,21 @@ services:
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
     mem_limit: 1024MB
+
+  data-integration:
+    image: datafabric-data-integration
+    build: ./data_integration
+    container_name: datafabric-data-integration
+    hostname: datafabric-data-integration
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./data_integration/microservice.py:/microservice.py
+      - ./data_integration/microservice.log:/microservice.log
+    networks:
+      datafabric_network:
+        ipv4_address: 172.22.0.8
+    mem_limit: 4096MB
 
 networks:
   datafabric_network:

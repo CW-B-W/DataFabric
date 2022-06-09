@@ -1,5 +1,8 @@
 import pymysql
-def preview_mysql(username, password, ip, port, db, table, limit):
+import pandas as pd
+from sqlalchemy import create_engine
+
+def preview_table_mysql(username, password, ip, port, db, table, limit):
     mysql_settings = {
         "host": ip,
         "port": int(port),
@@ -12,5 +15,17 @@ def preview_mysql(username, password, ip, port, db, table, limit):
     cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
     cursor.execute(f"SELECT * FROM {table} LIMIT {limit};")
     result = cursor.fetchall()
-    print(result)
     return result
+
+def query_table_mysql(username, password, ip, port, db, table, key_names, start_time, end_time, time_column):
+    sql = generate_query(table, key_names, start_time, end_time, time_column)
+    db_url    = 'mysql+pymysql://%s:%s@%s:%s/%s' % (username, password, ip, port, db)
+    db_engine = create_engine(db_url)
+    df = pd.read_sql(sql, con=db_engine)
+    return df
+
+def generate_query(table, key_names, start_time, end_time, time_column):
+    req_cols = ','.join(key_names)
+    optional_fields = f"WHERE {time_column} BETWEEN '{start_time}' and '{end_time}'"
+    sql = f'SELECT {req_cols} FROM {table} {optional_fields};' 
+    return sql
