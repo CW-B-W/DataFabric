@@ -96,7 +96,7 @@ def integrate(task_dict: dict):
             dbms       = d['dbms']
             db         = d['db']
             table      = d['table']
-            key_names  = d['key_names']
+            columns    = d['columns']
             try:
                 start_time = d['start_time']
                 end_time   = d['end_time']
@@ -111,7 +111,7 @@ def integrate(task_dict: dict):
                     queried_df = DBMSAccessor.query_table(
                         username, password,
                         ip, port, dbms,
-                        db, table, key_names,
+                        db, table, columns,
                         start_time, end_time, time_col
                     )
                     logging.info(f"Retrieving data from {dbms}")

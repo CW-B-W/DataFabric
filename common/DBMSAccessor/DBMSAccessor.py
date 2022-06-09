@@ -34,7 +34,7 @@ def preview_table(
 def query_table(
         username: str, password: str,
         ip: str, port, dbms: str, 
-        db: str, table: str, key_names: list, 
+        db: str, table: str, columns: list, 
         start_time: str = None, end_time: str = None, time_column: str = None) -> DataFrame:
     """Query data from DBMS. Return pandas.DataFrame
 
@@ -45,7 +45,7 @@ def query_table(
         port (str): Port of DBMS. Note that for Oracle it can be like '1521/sid'
         db (str): Desired DB in DBMS
         table (str): Desired Table in DB
-        key_names (list): Desired Keys(Columns) in Table
+        columns (list): Desired Keys(Columns) in Table
         start_time (str, optional): Query start time. Defaults to None.
         end_time (str, optional): Query end time. Defaults to None.
         time_column (str, optional): The column of start_time, end_time. Defaults to None.
@@ -56,5 +56,5 @@ def query_table(
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)
     # The target function name should be like such as 'query_table_mysql(...)'
-    return globals()[f'query_table_{dbms}'](username, password, ip, port, db, table, key_names, start_time, end_time, time_column)
+    return globals()[f'query_table_{dbms}'](username, password, ip, port, db, table, columns, start_time, end_time, time_column)
     
