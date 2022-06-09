@@ -61,3 +61,7 @@ sudo ./datafabric.sh generate_testdata {n_table} {n_catalog} {n_user} {gen_ratin
 # n_catalog:  The number of test users (Default: 50)
 # gen_rating: Whether to generate rating (Default: 1)
 ```
+Train recommender system
+```bash
+sudo ./datafabric.sh train_recommender
+```

@@ -50,8 +50,9 @@ function generate_test_data() {
     if [[ "$4" == "1" ]]; then
         gen_rating="-r"
     fi
-    docker exec -it datafabric-flask python3 /flask-share/initialize_datafabric.py
+    initialize_datafabric
     docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
+    train_recommender
 }
 
 function restart_flask() {
@@ -61,6 +62,10 @@ function restart_flask() {
 
 function initialize_datafabric() {
     docker exec -it datafabric-flask python3 /flask-share/initialize_datafabric.py
+}
+
+function train_recommender() {
+    docker exec -it datafabric-flask curl http://datafabric-recommender:5000/train?implicit_pref=True
 }
 
 function print_help() {
@@ -78,6 +83,7 @@ function print_help() {
     echo -e "\t./datafabric.sh mysql"
     echo -e "\t./datafabric.sh mongo"
     echo -e "\t./datafabric.sh generate_testdata 1000 200 50 1"
+    echo -e "\t./datafabric.sh train_recommender"
 }
 
 if [[ "$1" == "help" ]]; then
@@ -118,6 +124,8 @@ elif [[ "$1" == "restart-flask" ]]; then
     restart_flask
 elif [[ "$1" == "initialize" ]]; then
     initialize_datafabric
+elif [[ "$1" == "train_recommender" ]]; then
+    train_recommender
 else
     print_help
 fi
