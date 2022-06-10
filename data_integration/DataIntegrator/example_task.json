@@ -2,7 +2,7 @@
     "task_id":"admin_test",
     "task_list":[
         {
-            "db":[
+            "src":[
                 {
                     "dbms":"mysql",
                     "ip":"datafabric-mysql",
@@ -34,10 +34,10 @@
             ],
             "join_sql":"SELECT COALESCE(df0.ID, df1.ID) as ID, df0.COLUMN590 as COLUMN590, df1.COLUMN591 as COLUMN591 FROM df0 LEFT JOIN df1 ON df0.ID=df1.ID;",
             "result":{
-                "columns":[
+                "column_order":[
                     "ID",
-                    "COLUMN590",
-                    "COLUMN591"
+                    "COLUMN591",
+                    "COLUMN590"
                 ]
             }
         }

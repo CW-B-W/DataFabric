@@ -88,7 +88,7 @@ def integrate(task_dict: dict):
     for task_idx, task_info in enumerate(task_list):
         logging.info(f"Start processing the {task_idx}-th task")
         send_task_status(task_id, TASKSTATUS_PROCESSING, f"Start processing the {task_idx}-th task")
-        for i, d in enumerate(task_info['db']):
+        for i, d in enumerate(task_info['src']):
             username   = d['username']
             password   = d['password']
             ip         = d['ip']
@@ -140,7 +140,7 @@ def integrate(task_dict: dict):
                 send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
                 exit(1)
 
-        if len(task_info['db']) < 2:
+        if len(task_info['src']) < 2:
             df_joined = df0
         else:
             # use pandasql to join tables
@@ -157,7 +157,7 @@ def integrate(task_dict: dict):
                 exit(1)
 
         try:
-            columns_order = task_info['result']['columns']
+            columns_order = task_info['result']['column_order']
             df_joined = df_joined.reindex(columns_order, axis=1)
             logging.debug(str(df_joined))
         except Exception as e:
