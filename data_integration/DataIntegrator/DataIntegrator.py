@@ -97,11 +97,12 @@ def integrate(task_dict: dict):
             db         = d['db']
             table      = d['table']
             columns    = d['columns']
-            try:
-                start_time = d['start_time']
-                end_time   = d['end_time']
-                time_col   = d['time_column']
-            except:
+
+            if 'start_time' not in d:
+                d['start_time'] = '1990-01-01 00:00'
+            if 'end_time' not in d:
+                d['end_time']   = '2099-12-31 23:55'
+            if 'time_column' not in d:
                 start_time = None
                 end_time   = None
                 time_col   = None
