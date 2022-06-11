@@ -244,7 +244,25 @@ def train_recommender():
     response = requests.get('http://datafabric-recommender:5000/train?' + request.query_string.decode())
     return response.text
 
-@app.route('/test_mq')
-def test_mq():
-    task_req_mq.send_dict({'hello': 'world'})
-    return 'ok'
+@app.route('/data_integration', methods=['GET', 'POST'])
+def data_integration():
+    try:
+        if request.method == 'GET':
+            table_ids = request.args.get('table_ids', type=str)
+            if table_ids is None:
+                return 'table_ids must be specified.', 400
+            table_ids = [int(table_id) for table_id in table_ids.split(',')]
+            table_infos = [TableManager.get_table_info(table_id) for table_id in table_ids]
+
+            user_info = UserManager.get_user_info(session['user_id'])
+            for table_info in table_infos:
+                dbms = table_info['DBMS'].lower()
+                conn = table_info['Connection']
+                table_info['Username'] = user_info['db_account'][dbms][conn]['username']
+                table_info['Password'] = user_info['db_account'][dbms][conn]['password']
+
+            return render_template('data_integration.html', tableInfos = table_infos)
+        elif request.method == 'POST':
+            return '';
+    except Exception as e:
+        return str(e), 500
