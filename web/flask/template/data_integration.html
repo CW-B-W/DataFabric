@@ -8,11 +8,15 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
+  <link href='{{ url_for('static', filename="css/bootstrap-datetimepicker.min.css") }}' rel="stylesheet" media="screen">
+  <script src='{{ url_for('static', filename="js/bootstrap-datetimepicker.js") }}' charset="UTF-8"></script>
+
+  <script src='{{ url_for('static', filename="js/data_integration_page.js") }}' charset="UTF-8"></script>
   <script src='{{ url_for('static', filename="js/dbms.js") }}' charset="UTF-8"></script>
 
   <script>
     /* These variables can be seen by js */
-    flaskConfig = {{flaskConfig | tojson}}
+    tableInfos = {{tableInfos | tojson}}
   </script>
 
   <style>
@@ -25,6 +29,114 @@
 </head>
 
 <body>
+<div class="container">
+  <div class="row">
+    {% for elem_id in range(2) %}
+    <div class="col">
+      <form>
+        <label>Database</label>
+        <select disabled class="form-select w-100">
+          <option>{{tableInfos[elem_id]['DBMS']}}</option>
+        </select>
+        <br><br>
+        <div class="form-group">
+          <label>Server</label>
+          <input disabled type="text" class="form-control" value="{{tableInfos[elem_id]['Connection']}}">
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input disabled type="email" class="form-control" value="{{tableInfos[elem_id]['Username']}}">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input disabled type="password" class="form-control" value="{{tableInfos[elem_id]['Password']}}">
+        </div>
+      </form>
 
+      <label>Column for time query</label>
+      <select id="TimeColumnSelect{{elem_id}}" class="form-select w-100">
+        <option></option>
+        {% for col in tableInfos[elem_id]['Columns'].split(',') %}
+        <option>{{col}}</option>
+        {% endfor %}
+      </select>
+      <br><br>
+      <div class="container">
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>Start time</label>
+            <div class="input-group date">
+              <input type="text" class="form-control" id="TimeStartInput{{elem_id}}">
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-calendar"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <div class="form-group">
+            <label>End time</label>
+            <div class="input-group date">
+              <input type="text" class="form-control" id="TimeEndInput{{elem_id}}">
+              <span class="input-group-addon">
+                <span class="glyphicon glyphicon-calendar"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script type="text/javascript">
+      $(function () {
+          $('#TimeStartInput{{elem_id}}').datetimepicker({uiLibrary: 'bootstrap4'});
+          $('#TimeEndInput{{elem_id}}').datetimepicker({useCurrent: false});
+          $("#TimeStartInput{{elem_id}}").on("dp.change", function (e) {
+              $('#TimeEndInput{{elem_id}}').data("DateTimePicker").minDate(e.date);
+          });
+          $("#TimeEndInput{{elem_id}}").on("dp.change", function (e) {
+              $('#TimeStartInput{{elem_id}}').data("DateTimePicker").maxDate(e.date);
+          });
+      });
+      </script>
+      <select id="ColumnsSelect{{elem_id}}" class="form-select w-100" style="height: 300px;" multiple>
+        {% for col in tableInfos[elem_id]['Columns'].split(',') %}
+        <option>{{col}}</option>
+        {% endfor %}
+        <option></option>
+      </select>
+    </div>
+    {%endfor%}
+  </div>
+
+  <br>
+
+  <div class="row">
+    <table id="JoinTable" class="table">
+      <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Left Table</th>
+        <th scope="col">Right Table</th>
+      </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    <button onclick="popJoinTable()" class="btn btn-danger w-100">pop</button>
+  </div>
+
+  <br>
+  <hr>
+  <br>
+
+  <div class="row">
+    <button onclick="sendTaskRequest()" class="btn btn-success w-100">Send Request</button>
+  </div>
+  <br>
+  <div class="row">
+    <label>Task Infomation</label>
+    <textarea disabled class="form-control" id="TaskInfoTextarea" rows="3"></textarea>
+  </div>
+</div>
+<br><br><br>
 </body>
 </html>

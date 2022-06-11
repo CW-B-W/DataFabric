@@ -1,18 +1,18 @@
-function gen_db_info_mongodb(ip, port, username, password, dbname, tblname, keylist, namemapping, starttime, endtime, time_column) {
-    db = {
+function generateSrcInfo_mongodb(ip, port, username, password, dbName, tableName, columns, namemapping, startTime, endTime, timeColumn) {
+    let srcInfo = {
         'dbms'        : 'mongodb',
         'ip'          : ip,
         'port'        : port,
         'username'    : username,
         'password'    : password,
-        'db'          : dbname,
-        'table'       : tblname,
-        'columns'     : keylist,
+        'db'          : dbName,
+        'table'       : tableName,
+        'columns'     : columns,
         'namemapping' : namemapping,
-        'starttime'   : starttime,
-        'endtime'     : endtime,
-        'time_column' : time_column
+        'start_time'  : startTime,
+        'end_time'    : endTime,
+        'time_column' : timeColumn
     };
 
-    return db;
+    return srcInfo;
 }
