@@ -31,6 +31,7 @@ services:
       - ./common/DBMSAccessor:/DBMSAccessor
       - ./web/flask/DatafabricManager:/DatafabricManager
       - ./web/flask/RecommenderService:/RecommenderService
+      - ./web/flask/DataIntegrationService:/DataIntegrationService
       - ./test:/test
     mem_limit: 4096MB
   

@@ -15,12 +15,12 @@ transaction_logging = TransactionLogging('TransactionLogs')
 from InternalDB.RedisDB import RedisDB
 cache_db = RedisDB(db=0)
 
-from InternalMQ.RabbitMQ import RabbitMQ
-task_req_mq = RabbitMQ('task_req')
-
 from DBMSAccessor import DBMSAccessor
 
 from RecommenderService import RecommenderService
+
+from DataIntegrationService import DataIntegrationService
+DataIntegrationService.start_monitor_task_status(background=True)
 
 ''' ================ Flask Init ================ '''
 import flask
@@ -263,6 +263,17 @@ def data_integration():
 
             return render_template('data_integration.html', tableInfos = table_infos)
         elif request.method == 'POST':
-            return '';
+            task_info = json.loads(request.data.decode('utf-8'))
+            DataIntegrationService.send_task(task_info)
+            return task_info['task_id']
     except Exception as e:
         return str(e), 500
+
+@app.route('/data_integration/status')
+def data_integration_status():
+    task_id     = request.args.get('task_id', type=str)
+    task_status = DataIntegrationService.get_task_status(task_id)
+    if task_status is not None:
+        return json.dumps(task_status)
+    else:
+        return 'task_id is not found.', 400
