@@ -1,15 +1,14 @@
-$(document).ready(function() {
-    // load submodules
-    var submodules = ['mysql.js', 'mongodb.js']
-    for (var i in submodules) {
-        var submodule = submodules[i];
-        var path = `/static/js/dbms/${submodule}`
-        $("head").append($("<script></script>").attr("src", path));
-    }
-});
-
 function generateSrcInfo(ip, port, username, password, dbms, dbName, tableName, columns, namemapping, startTime, endTime, timeColumn) {
     dbms = dbms.toLowerCase();
+
+    let func_name = `generateSrcInfo_${dbms}`;
+
+    if (typeof(window[func_name]) === 'undefined') {
+        console.info(`Loading module ${dbms}.js`);
+        let path = `/static/js/dbms/${dbms}.js`
+        $("head").append($("<script></script>").attr("src", path));
+    }
+
     if (startTime == '') {
         startTime = '1990-01-01 00:00';
     }
@@ -17,7 +16,7 @@ function generateSrcInfo(ip, port, username, password, dbms, dbName, tableName, 
         endTime   = '2099-12-31 23:55';
     }
 
-    let srcInfo = eval(`generateSrcInfo_${dbms}`)(ip, port, username, password, dbName, tableName, columns, namemapping, startTime, endTime, timeColumn);
+    let srcInfo = eval(func_name)(ip, port, username, password, dbName, tableName, columns, namemapping, startTime, endTime, timeColumn);
 
     if (timeColumn == '') {
         delete srcInfo['time_column'];
