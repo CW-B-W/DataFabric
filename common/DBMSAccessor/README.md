@@ -15,7 +15,7 @@ touch mongodbAccessor.py
 ```
 
 3. Edit `mongodbAccessor.py` and implement functions  
-The function names should have suffix `_mongodb`
+***The function names should have suffix `_mongodb`***
 ```python
 import ...
 
