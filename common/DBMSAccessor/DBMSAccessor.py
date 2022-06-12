@@ -1,8 +1,14 @@
+from importlib import import_module
 from pandas import DataFrame
 from sqlalchemy import create_engine
 
-from .MySQLAccessor.MySQLAccessor import *
-from .MongoDBAccessor.MongoDBAccessor import *
+loaded_module = {}
+
+def get_module_func(mod_name, func_name):
+    if mod_name not in loaded_module:
+        loaded_module[mod_name] = import_module(f'.{mod_name}', f'{mod_name}')
+    mod = loaded_module[mod_name]
+    return getattr(mod, func_name)
 
 
 def preview_table(
@@ -29,7 +35,8 @@ def preview_table(
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)
     # The target function name should be like such as 'preview_table_mysql(...)'
-    return globals()[f'preview_table_{dbms}'](username, password, ip, port, db, table, limit)
+    func = get_module_func(f'{dbms}Accessor', f'preview_table_{dbms}')
+    return func(username, password, ip, port, db, table, limit)
 
 def query_table(
         username: str, password: str,
@@ -56,5 +63,5 @@ def query_table(
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)
     # The target function name should be like such as 'query_table_mysql(...)'
-    return globals()[f'query_table_{dbms}'](username, password, ip, port, db, table, columns, start_time, end_time, time_column)
-    
+    func = get_module_func(f'{dbms}Accessor', f'query_table_{dbms}')
+    return func(username, password, ip, port, db, table, columns, start_time, end_time, time_column)
