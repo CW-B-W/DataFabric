@@ -33,7 +33,7 @@
                 }
             ],
             "join_sql":"SELECT COALESCE(df0.ID, df1.ID) as ID, df0.COLUMN590 as COLUMN590, df1.COLUMN591 as COLUMN591 FROM df0 LEFT JOIN df1 ON df0.ID=df1.ID;",
-            "result":{
+            "results":{
                 "column_order":[
                     "ID",
                     "COLUMN591",
