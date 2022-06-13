@@ -46,6 +46,9 @@ function mongo_cli() {
 }
 
 function generate_test_data() {
+    stop_docker_compose
+    start_docker_compose
+
     local gen_rating=""
     if [[ "$4" == "1" ]]; then
         gen_rating="-r"
@@ -54,6 +57,9 @@ function generate_test_data() {
     docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
     echo "Start training initial recommender..."
     train_recommender
+
+    stop_docker_compose
+    start_docker_compose
 }
 
 function restart_flask() {

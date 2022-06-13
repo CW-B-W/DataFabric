@@ -93,9 +93,9 @@ function createJoinSubtask()
     }
     let subtask = {
         'src'      : srcInfos,
-        'join_sql' : generateJoinSql(),
+        'join_sql' : generateJoinSql(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']),
         'results'  : {
-            'column_order' : generateResultKeys()
+            'column_order' : generateResultKeys(srcInfos[0]['namemapping'], srcInfos[1]['namemapping'])
         }
     }
     return subtask;
@@ -128,7 +128,7 @@ function getColumnsInvolved(srcIdx) {
     return Array.from(involved);
 }
 
-function generateJoinSql() {
+function generateJoinSql(namemappingLeft, namemappingRight) {
     let leftKeys  = [];
     let rightKeys = [];
     $('#JoinTable >tbody').children().each(function(idx) {
@@ -143,16 +143,20 @@ function generateJoinSql() {
         let rightKey = rightKeys[i];
         let newKey   = '';
         if (leftKey != '' && rightKey != '') {
-            newKey = toFormattedKey(leftKey);
+            leftKey  = namemappingLeft[leftKey];
+            rightKey = namemappingRight[rightKey];
+            newKey = leftKey;
             selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
             onStats.push(`df0.${leftKey}=df1.${rightKey}`);
         }
         else if (leftKey != '' && rightKey == '') {
-            newKey = toFormattedKey(leftKey);
+            leftKey = namemappingLeft[leftKey];
+            newKey = leftKey;
             selStats.push(`df0.${leftKey} as ${newKey}`);
         }
         else if (leftKey == '' && rightKey != '') {
-            newKey = toFormattedKey(rightKey);
+            rightKey = namemappingRight[rightKey];
+            newKey = rightKey;
             selStats.push(`df1.${rightKey} as ${newKey}`);
         }
         else {
@@ -168,7 +172,7 @@ function generateJoinSql() {
     return sql;
 }
 
-function generateResultKeys() {
+function generateResultKeys(namemappingLeft, namemappingRight) {
     let leftKeys  = [];
     let rightKeys = [];
     $('#JoinTable >tbody').children().each(function(idx) {
@@ -183,19 +187,23 @@ function generateResultKeys() {
         let rightKey = rightKeys[i];
         let resultKey = '';
         if (leftKey != '' && rightKey != '') {
+            leftKey  = namemappingLeft[leftKey];
+            rightKey = namemappingRight[rightKey];
             resultKey = leftKey;
         }
         else if (leftKey != '' && rightKey == '') {
+            leftKey = namemappingLeft[leftKey];
             resultKey = leftKey;
         }
         else if (leftKey == '' && rightKey != '') {
+            rightKey = namemappingRight[rightKey];
             resultKey = rightKey;
         }
         else {
             // DO NOTHING for this case
         }
 
-        resultKey = toFormattedKey(resultKey);
+        resultKey = resultKey;
         resultKeys.push(resultKey);
     }
     

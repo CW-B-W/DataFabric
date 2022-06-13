@@ -150,7 +150,6 @@ def integrate(task_dict: dict):
                 logging.info('Start joining two tables')
                 send_task_status(task_id, TASKSTATUS_PROCESSING, "Start joining two tables")
                 df_joined = pysqldf(task_info['join_sql'])
-                print(df_joined, file=sys.stderr)
                 logging.info('Finished joining two tables')
                 send_task_status(task_id, TASKSTATUS_PROCESSING, "Finished joining two tables")
             except Exception as e:

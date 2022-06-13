@@ -94,7 +94,7 @@ def create_testdata_table_random(table_info):
             for i in range(50):
                 command = f"""
                     INSERT INTO {table_info['TableName']} VALUES (
-                        "{random.randint(0, 1000)}",
+                        "{random.randint(0, 100)}",
                         "{random.randint(0, 1000)}",
                         "{random.randint(0, 1000)}",
                         "{random.randint(0, 1000)}",
