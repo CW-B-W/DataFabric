@@ -103,9 +103,13 @@ def integrate(task_dict: dict):
             if 'end_time' not in d:
                 d['end_time']   = '2099-12-31 23:55'
             if 'time_column' not in d:
-                start_time = None
-                end_time   = None
-                time_col   = None
+                d['start_time']  = None
+                d['end_time']    = None
+                d['time_column'] = None
+            
+            start_time = d['start_time']
+            end_time   = d['end_time']
+            time_col   = d['time_column']
 
             if dbms != 'dataframe':
                 try:
