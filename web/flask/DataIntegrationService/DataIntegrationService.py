@@ -19,7 +19,6 @@ def start_monitor_task_status(background: bool = True):
 
 task_status_dict = {}
 def received_task_status(ch, method, properties, body):
-    global task_status_dict
     task_status = json.loads(body.decode('utf-8'))
     task_id     = str(task_status['task_id'])
     task_status_dict[task_id] = task_status
