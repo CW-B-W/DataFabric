@@ -21,7 +21,6 @@ def query_table_cassandra(username, password, ip, port, db, table, columns, star
 
 def generate_query(db, table, columns, start_time, end_time, time_column):
     req_cols = ','.join(columns)
-    print(req_cols)
     optional_fields = ''
     if start_time is not None and end_time is not None and time_column is not None:
         optional_fields = f"WHERE {time_column} BETWEEN {start_time} and {end_time}"
