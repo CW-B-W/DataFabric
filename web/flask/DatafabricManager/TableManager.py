@@ -69,6 +69,10 @@ def add_table_info(connection: str, dbms: str, db: str, table_name: str, columns
             "{columns}"
         );
     """)
+    inserted_id = mysqldb.query(f"""
+        SELECT ID FROM TableInfo ORDER BY ID DESC LIMIT 1
+    """)[0]['ID']
+    return inserted_id
 
 def del_table_info(table_id: int):
     mysqldb.query(f"""

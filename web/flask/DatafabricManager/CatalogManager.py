@@ -89,6 +89,10 @@ def add_catalog( \
             {catalog_downvote}
         );
     """)
+    inserted_id = mysqldb.query(f"""
+        SELECT ID FROM CatalogManager ORDER BY ID DESC LIMIT 1
+    """)[0]['ID']
+    return inserted_id
 
 def del_catalog(catalog_id: int):
     mysqldb.query(f"""

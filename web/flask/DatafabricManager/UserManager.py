@@ -58,6 +58,7 @@ def add_user(user_info: dict):
         'catalog_views' : {}
     }
     mongodb.insert('ratings', rating_info)
+    return new_user_id
 
 def del_user(user_id: int):
     user_info = get_user_info(user_id)
