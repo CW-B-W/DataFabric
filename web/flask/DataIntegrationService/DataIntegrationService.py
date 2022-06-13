@@ -13,6 +13,7 @@ def start_monitor_task_status(background: bool = True):
     global monitor_thread
     if background:
         monitor_thread = threading.Thread(target=task_status_mq.listen, args=[received_task_status])
+        monitor_thread.start()
     else:
         task_status_mq.listen(received_task_status)
         
