@@ -135,6 +135,8 @@ def set_db_account(user_id: int, dbms: str, ip_port: str, username: str, passwor
     dbms = dbms.lower()
     user_info = get_user_info(user_id)
     ip, port = ip_port.split(':')
+    if dbms not in user_info['db_account']:
+        user_info['db_account'][dbms] = {}
     user_info['db_account'][dbms][ip_port] = {
         'ip'       : ip,
         'port'     : port,
