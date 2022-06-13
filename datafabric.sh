@@ -50,8 +50,9 @@ function generate_test_data() {
     if [[ "$4" == "1" ]]; then
         gen_rating="-r"
     fi
-    initialize_datafabric
+    echo "Start generating testdata..."
     docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
+    echo "Start training initial recommender..."
     train_recommender
 }
 
@@ -61,7 +62,16 @@ function restart_flask() {
 }
 
 function initialize_datafabric() {
-    docker exec -it datafabric-flask python3 /flask-share/initialize_datafabric.py
+    docker network create --driver=bridge --subnet=172.22.0.0/24 datafabric_network
+
+    echo -e "Starting internal databases..."
+    docker-compose run -d --rm --no-deps mysql
+    docker-compose run -d --rm --no-deps mongo
+
+    echo -e "Initializing Datafabric metadata..."
+    docker-compose run --rm --no-deps flask python3 /flask-share/initialize_datafabric.py
+
+    stop_docker_compose
 }
 
 function train_recommender() {

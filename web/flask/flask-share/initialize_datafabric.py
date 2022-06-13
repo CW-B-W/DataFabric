@@ -7,6 +7,16 @@ import time
 
 from DatafabricManager import UserManager
 
+def mysql_connect(db_settings):
+    while True:
+        try:
+            # First check if database exists
+            conn = pymysql.connect(**db_settings)
+            return conn
+        except Exception as ex:
+            print(f"Waiting for MySQL to startup. Retry after 3s.")
+            time.sleep(3)
+
 def create_mysql_database(db, replace=True):
     db_settings = {
         "host": "datafabric-mysql",
@@ -16,7 +26,7 @@ def create_mysql_database(db, replace=True):
         "charset": "utf8"
     }
     try:
-        conn = pymysql.connect(**db_settings)
+        conn = mysql_connect(db_settings)
         with conn.cursor() as cursor:
             if replace:
                 command = f"""
@@ -42,7 +52,7 @@ def create_mysql_table(db, table, create_sql, replace=True):
         "charset": "utf8"
     }
     try:
-        conn = pymysql.connect(**db_settings)
+        conn = mysql_connect(db_settings)
         with conn.cursor() as cursor:
             if replace:
                 command = f"""

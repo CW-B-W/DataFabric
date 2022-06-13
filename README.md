@@ -1,8 +1,8 @@
 # Quick Start
 ```bash
 sudo ./datafabric.sh build
+sudo ./datafabric.sh initialize
 sudo ./datafabric.sh start
-sudo docker exec -it datafabric-mysql mysql -p # login to activate MySQL. {assword: my-secret-pw
 sudo ./datafabric.sh generate_testdata 1000 200 50 1 # 1000 random_tables, 200 catalogs, 50 users, generate fake ratings
 ```
 Then connect to `{your_ip}:5000/`,  
@@ -43,9 +43,6 @@ sudo ./datafabric.sh flask-cli
 ```
 Enter MySQL CLI
 ```bash
-# For the first time, you must activate the root account first
-# sudo docker exec -it datafabric-mysql mysql -p
-# password: my-secret-pw
 sudo ./datafabric.sh mysql
 ```
 Enter MongoDB CLI
