@@ -6,7 +6,7 @@ loaded_module = {}
 
 def get_module_func(mod_name, func_name):
     if mod_name not in loaded_module:
-        loaded_module[mod_name] = import_module(f'.{mod_name}', f'{mod_name}')
+        loaded_module[mod_name] = import_module(f'.{mod_name}.{mod_name}', f'DBMSAccessor')
     mod = loaded_module[mod_name]
     return getattr(mod, func_name)
 

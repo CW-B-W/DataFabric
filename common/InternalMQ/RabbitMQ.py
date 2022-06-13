@@ -30,6 +30,6 @@ class RabbitMQ:
             exchange='', routing_key=self.__queue, body=s, 
             properties=pika.BasicProperties(delivery_mode = 2)) # make message persistent
 
-    def listen(self, callback: function):
+    def listen(self, callback: callable):
         self.__channel.basic_consume(queue=self.__queue, on_message_callback=callback, auto_ack=True)
         self.__channel.start_consuming()

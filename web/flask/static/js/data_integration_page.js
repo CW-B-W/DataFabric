@@ -95,7 +95,7 @@ function createJoinSubtask()
         'src'      : srcInfos,
         'join_sql' : generateJoinSql(),
         'results'  : {
-            'column_order' : []
+            'column_order' : generateResultKeys()
         }
     }
     return subtask;
@@ -112,7 +112,7 @@ function getJoinSrcInfo(srcIdx) {
         tableInfos[srcIdx]['DB'],
         tableInfos[srcIdx]['TableName'],
         columnsInvolved,
-        columnsInvolved.map(x => toFormattedKey(x)),
+        Object.fromEntries(columnsInvolved.map(x => [x, toFormattedKey(x)])),
         $(`#TimeStartInput${srcIdx}`).val(),
         $(`#TimeEndInput${srcIdx}`).val(),
         $(`#TimeColumnSelect${srcIdx}`).val()
@@ -166,6 +166,40 @@ function generateJoinSql() {
     let sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
 
     return sql;
+}
+
+function generateResultKeys() {
+    let leftKeys  = [];
+    let rightKeys = [];
+    $('#JoinTable >tbody').children().each(function(idx) {
+        leftKeys.push($(this).find('td').eq(0).text());
+        rightKeys.push($(this).find('td').eq(1).text());
+    });
+
+    let resultKeys = [];
+    let keySet = new Set();
+    for (let i = 0; i < leftKeys.length; ++i) {
+        let leftKey  = leftKeys[i];
+        let rightKey = rightKeys[i];
+        let resultKey = '';
+        if (leftKey != '' && rightKey != '') {
+            resultKey = leftKey;
+        }
+        else if (leftKey != '' && rightKey == '') {
+            resultKey = leftKey;
+        }
+        else if (leftKey == '' && rightKey != '') {
+            resultKey = rightKey;
+        }
+        else {
+            // DO NOTHING for this case
+        }
+
+        resultKey = toFormattedKey(resultKey);
+        resultKeys.push(resultKey);
+    }
+    
+    return resultKeys;
 }
 
 function showTaskInfo(taskInfo)

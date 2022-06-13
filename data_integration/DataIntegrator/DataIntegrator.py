@@ -150,6 +150,7 @@ def integrate(task_dict: dict):
                 logging.info('Start joining two tables')
                 send_task_status(task_id, TASKSTATUS_PROCESSING, "Start joining two tables")
                 df_joined = pysqldf(task_info['join_sql'])
+                print(df_joined, file=sys.stderr)
                 logging.info('Finished joining two tables')
                 send_task_status(task_id, TASKSTATUS_PROCESSING, "Finished joining two tables")
             except Exception as e:
@@ -158,7 +159,7 @@ def integrate(task_dict: dict):
                 exit(1)
 
         try:
-            columns_order = task_info['result']['column_order']
+            columns_order = task_info['results']['column_order']
             df_joined = df_joined.reindex(columns_order, axis=1)
             logging.debug(str(df_joined))
         except Exception as e:
