@@ -32,6 +32,7 @@ services:
       - ./web/flask/DatafabricManager:/DatafabricManager
       - ./web/flask/RecommenderService:/RecommenderService
       - ./web/flask/DataIntegrationService:/DataIntegrationService
+      - ./web/flask/DatafabricTools:/DatafabricTools
       - ./test:/test
     mem_limit: 4096MB
   
