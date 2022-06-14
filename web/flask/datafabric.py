@@ -267,7 +267,10 @@ def data_integration():
             return render_template('data_integration.html', tableInfos = table_infos)
         elif request.method == 'POST':
             task_info = json.loads(request.data.decode('utf-8'))
-            DataIntegrationService.send_task(task_info)
+            try:
+                DataIntegrationService.send_task(task_info)
+            except Exception as e:
+                return str(e)
             return task_info['task_id']
     except Exception as e:
         return str(e), 500

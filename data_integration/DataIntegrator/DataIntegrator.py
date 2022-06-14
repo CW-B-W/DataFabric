@@ -77,6 +77,9 @@ def integrate(task_dict: dict):
         send_task_status(str(-1), TASKSTATUS_UNKNOWN, str(e))
         exit(1)
 
+    with open(f'/task_requests/{task_id}.json', 'w') as wf:
+        json.dump(task_dict, wf)
+
     ts = str(datetime.now().timestamp())
     setup_logging('joined_' + task_id + '_' + ts + '.log')
     logging.info('Task started. task_id = ' + task_id)
