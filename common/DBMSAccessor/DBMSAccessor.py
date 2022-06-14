@@ -70,7 +70,7 @@ def query_table(
 def list_dbs(username: str, password: str, 
     ip: str, port: str, dbms: str
 ) -> list:
-    """Query what databases are in the table.
+    """Query what databases are in the DBMS.
     This is the abstract function for calling functions of desired DBMS.
 
     Args:
@@ -93,7 +93,7 @@ def list_tables(username: str, password: str,
     ip: str, port: str, dbms: str,
     db: str
 ) -> list:
-    """Query what tables are in the table.
+    """Query what tables are in the DB.
     This is the abstract function for calling functions of desired DBMS.
 
     Args:
