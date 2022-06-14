@@ -261,6 +261,9 @@ def data_integration():
                 table_info['Username'] = user_info['db_account'][dbms][conn]['username']
                 table_info['Password'] = user_info['db_account'][dbms][conn]['password']
 
+            if len(table_infos) == 1:
+                table_infos.append(TableManager.none_table_info())
+
             return render_template('data_integration.html', tableInfos = table_infos)
         elif request.method == 'POST':
             task_info = json.loads(request.data.decode('utf-8'))

@@ -111,7 +111,7 @@ def integrate(task_dict: dict):
             end_time   = d['end_time']
             time_col   = d['time_column']
 
-            if dbms != 'dataframe':
+            if dbms != 'dataframe' or dbms != 'none':
                 try:
                     queried_df = DBMSAccessor.query_table(
                         username, password,
@@ -126,27 +126,27 @@ def integrate(task_dict: dict):
                     logging.error(f"Failed to retrieve data from {dbms}" + str(e))
                     send_task_status(task_id, TASKSTATUS_FAILED, f"Failed to retrieve data from {dbms}" + str(e))
                     exit(1)
-            logging.info(f'Finished retrieving table {i} from {dbms}')
-            
-            # make all column names uppercase
-            try:
-                if 'namemapping' in d:
-                    namemapping = d['namemapping']
-                    # make mapping key uppercase
-                    namemapping =  {k.upper(): v for k, v in namemapping.items()}
-                    # make original columns uppercase
-                    globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
-                    globals()[f'df{i}'].rename(columns=namemapping, inplace=True)
-                else:
-                    globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
-                logging.debug(str(globals()[f'df{i}']))
-            except Exception as e:
-                logging.error("Error in renaming columns: " + str(e))
-                send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
-                exit(1)
+                logging.info(f'Finished retrieving table {i} from {dbms}')
+                
+                # make all column names uppercase
+                try:
+                    if 'namemapping' in d:
+                        namemapping = d['namemapping']
+                        # make mapping key uppercase
+                        namemapping =  {k.upper(): v for k, v in namemapping.items()}
+                        # make original columns uppercase
+                        globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
+                        globals()[f'df{i}'].rename(columns=namemapping, inplace=True)
+                    else:
+                        globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
+                    logging.debug(str(globals()[f'df{i}']))
+                except Exception as e:
+                    logging.error("Error in renaming columns: " + str(e))
+                    send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
+                    exit(1)
 
         if len(task_info['src']) < 2:
-            df_joined = df0
+            df_joined = globals()['df0']
         else:
             # use pandasql to join tables
             try:
@@ -170,7 +170,7 @@ def integrate(task_dict: dict):
             send_task_status(task_id, TASKSTATUS_FAILED, "Error in joining the two tables. Please check if duplicated columns exist: " + str(e))
             exit(1)
 
-        df0 = df_joined # reuse df0 if it's a pipeline task
+        globals()['df0'] = df_joined # reuse globals()['df0'] if it's a pipeline task
 
 
 
@@ -183,6 +183,6 @@ def integrate(task_dict: dict):
 
     df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
 
-    logging.error("Job finished")
+    logging.info("Job finished")
     send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")
     exit()

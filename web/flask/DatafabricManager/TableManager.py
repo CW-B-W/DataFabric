@@ -78,3 +78,13 @@ def del_table_info(table_id: int):
     mysqldb.query(f"""
         DELETE FROM TableInfo WHERE ID = {table_id};
     """)
+
+def none_table_info():
+    return {
+        'ID': -1,
+        'Connection' : 'None',
+        'DBMS' : 'None',
+        'DB' : 'None',
+        'TableName' : 'None',
+        'Columns' : 'None'
+    }

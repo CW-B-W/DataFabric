@@ -89,19 +89,32 @@ function createJoinSubtask()
 {
     let srcInfos = []
     for (let i = 0; i < 2; ++i) {
-        srcInfos.push(getJoinSrcInfo(i));
+        let srcInfo = getJoinSrcInfo(i);
+        if (srcInfo)
+            srcInfos.push(srcInfo);
+    }
+    if (srcInfos.length == 1) {
+        var joinSql     = generateJoinSql(srcInfos[0]['namemapping'], null);
+        var columnOrder = generateResultKeys(srcInfos[0]['namemapping'], null);
+    }
+    else {
+        var joinSql     = generateJoinSql(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']);
+        var columnOrder = generateResultKeys(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']);
     }
     let subtask = {
         'src'      : srcInfos,
-        'join_sql' : generateJoinSql(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']),
+        'join_sql' : joinSql,
         'results'  : {
-            'column_order' : generateResultKeys(srcInfos[0]['namemapping'], srcInfos[1]['namemapping'])
+            'column_order' : columnOrder
         }
     }
     return subtask;
 }
 
 function getJoinSrcInfo(srcIdx) {
+    if (tableInfos[srcIdx]['DBMS'].toLowerCase() == 'none')
+        return null;
+
     let columnsInvolved = getColumnsInvolved(srcIdx);
     return generateSrcInfo(
         tableInfos[srcIdx]['Connection'].split(':')[0],
@@ -136,40 +149,57 @@ function generateJoinSql(namemappingLeft, namemappingRight) {
         rightKeys.push($(this).find('td').eq(1).text());
     });
 
-    let selStats = [];
-    let onStats  = [];
-    for (let i = 0; i < leftKeys.length; ++i) {
-        let leftKey  = leftKeys[i];
-        let rightKey = rightKeys[i];
-        let newKey   = '';
-        if (leftKey != '' && rightKey != '') {
-            leftKey  = namemappingLeft[leftKey];
-            rightKey = namemappingRight[rightKey];
-            newKey = leftKey;
-            selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
-            onStats.push(`df0.${leftKey}=df1.${rightKey}`);
+    if (namemappingRight) {
+        let selStats = [];
+        let onStats  = [];
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey  = leftKeys[i];
+            let rightKey = rightKeys[i];
+            let newKey   = '';
+            if (leftKey != '' && rightKey != '') {
+                leftKey  = namemappingLeft[leftKey];
+                rightKey = namemappingRight[rightKey];
+                newKey = leftKey;
+                selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
+                onStats.push(`df0.${leftKey}=df1.${rightKey}`);
+            }
+            else if (leftKey != '' && rightKey == '') {
+                leftKey = namemappingLeft[leftKey];
+                newKey = leftKey;
+                selStats.push(`df0.${leftKey} as ${newKey}`);
+            }
+            else if (leftKey == '' && rightKey != '') {
+                rightKey = namemappingRight[rightKey];
+                newKey = rightKey;
+                selStats.push(`df1.${rightKey} as ${newKey}`);
+            }
+            else {
+                // DO NOTHING for this case
+            }
         }
-        else if (leftKey != '' && rightKey == '') {
-            leftKey = namemappingLeft[leftKey];
-            newKey = leftKey;
+
+        let selFullStat = selStats.join(', ');
+        let onFullStat  = onStats.join(' AND ');
+
+        let sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
+
+        return sql;
+    }
+    else {
+        // Only exporting table
+        let selStats = [];
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey = namemappingLeft[leftKeys[i]];
+            let newKey  = leftKey;
             selStats.push(`df0.${leftKey} as ${newKey}`);
         }
-        else if (leftKey == '' && rightKey != '') {
-            rightKey = namemappingRight[rightKey];
-            newKey = rightKey;
-            selStats.push(`df1.${rightKey} as ${newKey}`);
-        }
-        else {
-            // DO NOTHING for this case
-        }
+
+        let selFullStat = selStats.join(', ');
+
+        let sql = `SELECT ${selFullStat} FROM df0;`;
+
+        return sql;
     }
-
-    let selFullStat = selStats.join(',');
-    let onFullStat  = onStats.join(' AND ');
-
-    let sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
-
-    return sql;
 }
 
 function generateResultKeys(namemappingLeft, namemappingRight) {
@@ -181,30 +211,38 @@ function generateResultKeys(namemappingLeft, namemappingRight) {
     });
 
     let resultKeys = [];
-    let keySet = new Set();
-    for (let i = 0; i < leftKeys.length; ++i) {
-        let leftKey  = leftKeys[i];
-        let rightKey = rightKeys[i];
-        let resultKey = '';
-        if (leftKey != '' && rightKey != '') {
-            leftKey  = namemappingLeft[leftKey];
-            rightKey = namemappingRight[rightKey];
-            resultKey = leftKey;
-        }
-        else if (leftKey != '' && rightKey == '') {
-            leftKey = namemappingLeft[leftKey];
-            resultKey = leftKey;
-        }
-        else if (leftKey == '' && rightKey != '') {
-            rightKey = namemappingRight[rightKey];
-            resultKey = rightKey;
-        }
-        else {
-            // DO NOTHING for this case
-        }
+    if (namemappingRight) {
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey  = leftKeys[i];
+            let rightKey = rightKeys[i];
+            let resultKey = '';
+            if (leftKey != '' && rightKey != '') {
+                leftKey  = namemappingLeft[leftKey];
+                rightKey = namemappingRight[rightKey];
+                resultKey = leftKey;
+            }
+            else if (leftKey != '' && rightKey == '') {
+                leftKey = namemappingLeft[leftKey];
+                resultKey = leftKey;
+            }
+            else if (leftKey == '' && rightKey != '') {
+                rightKey = namemappingRight[rightKey];
+                resultKey = rightKey;
+            }
+            else {
+                // DO NOTHING for this case
+            }
 
-        resultKey = resultKey;
-        resultKeys.push(resultKey);
+            resultKeys.push(resultKey);
+        }
+    }
+    else {
+        // Only exporting table
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey   = namemappingLeft[leftKeys[i]];
+            let resultKey = leftKey;
+            resultKeys.push(resultKey);
+        }
     }
     
     return resultKeys;
