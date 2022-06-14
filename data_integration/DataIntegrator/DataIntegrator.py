@@ -185,6 +185,8 @@ def integrate(task_dict: dict):
         exit(1)
 
     df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
+    if 'serve_as' in task_info['results']:
+        df_joined.to_csv(f"/data_serving/{task_info['results']['serve_as']}", index=False, header=True)
 
     logging.info("Job finished")
     send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")

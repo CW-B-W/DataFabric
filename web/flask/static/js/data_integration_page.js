@@ -105,9 +105,12 @@ function createJoinSubtask()
         'src'      : srcInfos,
         'join_sql' : joinSql,
         'results'  : {
-            'column_order' : columnOrder
+            'column_order' : columnOrder,
+            'serve_as' : $('#ServeAsName').val()
         }
     }
+    if (subtask['results']['serve_as'] == '')
+        delete subtask['results']['serve_as'];
     return subtask;
 }
 

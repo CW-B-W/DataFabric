@@ -16,23 +16,22 @@ def data_serving():
     while True:
         print(f'[data_serving] accepting')
         client_socket, address = s.accept()
-        task_id  = client_socket.recv(16*1024*1024).decode()
-        print(f'[data_serving] accepted {task_id}')
-        filepath = f'/integration_results/{task_id}.csv'
+        filename  = client_socket.recv(16*1024*1024).decode()
+        print(f'[data_serving] accepted {filename}')
+        filepath = f'/data_serving/{filename}'
         if os.path.exists(filepath):
-            print(f'[data_serving] sending file {task_id}.csv')
+            print(f'[data_serving] sending file {filename}')
             with open(filepath, 'rb') as fp:
                 client_socket.sendfile(fp)
         else:
             print(f'[data_serving] file not found')
-            client_socket.send(str.encode(f'File {task_id}.csv Not Found.'))
+            client_socket.send(str.encode(f'File {filename} Not Found.'))
         client_socket.close()
         print(f'[data_serving] client_socket closed')
         sys.stdout.flush()
     return
 
 def main():
-    data_serving()
     data_serving_thread = threading.Thread(target=data_serving)
     data_serving_thread.start()
 

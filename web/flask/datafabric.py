@@ -285,12 +285,11 @@ def data_integration_status():
     else:
         return 'task_id is not found.', 400
 
-@app.route('/data_integration/serving')
-def data_integration_serving():
-    task_id = request.args.get('task_id', type=str)
+@app.route('/data_integration/serving/<serving_name>')
+def data_integration_serving(serving_name):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect_ex(('datafabric-data-integration', 5001))
-    s.send(str.encode(task_id))
+    s.send(str.encode(serving_name))
     def recv_file(s):
         while (True):
             try:
