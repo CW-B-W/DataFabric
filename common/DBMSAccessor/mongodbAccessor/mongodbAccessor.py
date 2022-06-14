@@ -2,6 +2,7 @@ import pandas as pd
 import pymongo
 import dateutil
 import json
+import bson
 
 def preview_table_mongodb(username, password, ip, port, db, table, limit):
     auth = ''
@@ -55,3 +56,31 @@ def query_table_mongodb(username, password, ip, port, db, table, columns, start_
     else:
         mongodb_cursor = mongo_db[table].find({}, filter)
     return pd.DataFrame(list(mongodb_cursor))
+
+def list_dbs_mongodb(username, password, ip, port):
+    if username != '':
+        mongo_client = pymongo.MongoClient(f'mongodb://{username}:{password}@{ip}:{port}/')
+    else:
+        mongo_client = pymongo.MongoClient(f'mongodb://{ip}:{port}/')
+    return sorted(mongo_client.list_database_names())
+
+def list_tables_mongodb(username, password, ip, port, db):
+    if username != '':
+        mongo_client = pymongo.MongoClient(f'mongodb://{username}:{password}@{ip}:{port}/')
+    else:
+        mongo_client = pymongo.MongoClient(f'mongodb://{ip}:{port}/')
+    mongo_db = mongo_client[db]
+    return sorted(mongo_db.list_collection_names())
+
+def list_columns_mongodb(username, password, ip, port, db, table):
+    if username != '':
+        mongo_client = pymongo.MongoClient(f'mongodb://{username}:{password}@{ip}:{port}/')
+    else:
+        mongo_client = pymongo.MongoClient(f'mongodb://{ip}:{port}/')
+    mongo_db = mongo_client[db]
+    result = list(mongo_db[table].aggregate([
+        {"$project":{"arrayofkeyvalue":{"$objectToArray":"$$ROOT"}}},
+        {"$unwind":"$arrayofkeyvalue"},
+        {"$group":{"_id":"null","allkeys":{"$addToSet":"$arrayofkeyvalue.k"}}}
+    ]))
+    return sorted(result[0]['allkeys'])
