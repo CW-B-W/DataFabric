@@ -5,6 +5,7 @@ import sys, os, time
 import random
 import requests
 import pika
+import socket
 
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
@@ -283,3 +284,22 @@ def data_integration_status():
         return json.dumps(task_status)
     else:
         return 'task_id is not found.', 400
+
+@app.route('/data_integration/serving')
+def data_integration_serving():
+    task_id = request.args.get('task_id', type=str)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect_ex(('datafabric-data-integration', 5001))
+    s.send(str.encode(task_id))
+    def recv_file(s):
+        while (True):
+            try:
+                received_bytes = s.recv(16*1024*1024)
+                print(received_bytes)
+            except:
+                return
+            if received_bytes.decode() != '':
+                yield received_bytes
+            else:
+                return
+    return app.response_class(recv_file(s), mimetype='text/csv')
