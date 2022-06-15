@@ -4,10 +4,12 @@ import cx_Oracle
 from sqlalchemy import *
 
 def preview_table_oracle(username, password, ip, port, db, table, limit):
-    #db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
-    db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % ("brad", "00000000", "192.168.103.247", "49161/xe"))
-    df = pd.read_sql("SELECT column_name FROM all_tab_cols WHERE owner = '%s' and table_name = '%s'" % (db, table), con=db_engine)
-    return df
+    db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % ("system", "oracle", ip, port))
+    #df = pd.read_sql("SELECT column_name FROM all_tab_cols WHERE owner = '%s' and table_name = '%s'" % (db, table), con=db_engine)
+    #js = df.to_json(orient = 'records')
+    #return js
+    df = pd.read_sql("select table_name from user_tab_privs where OWNER = '%s'" % db, con=db_engine)
+    return sorted(df.iloc[:,0].tolist())
 
 def query_table_oracle(username, password, ip, port, db, table, columns, start_time, end_time, time_column):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
