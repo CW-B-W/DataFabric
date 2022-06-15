@@ -62,7 +62,7 @@ def validate_permission(action_info: dict) -> bool:
             return UserManager.get_catalog_permission(user_id, catalog_id)
         elif action_info['action'] == 'table_preview':
             table_id = action_info['table_id']
-            return UserManager.get_catalog_permission(user_id, table_id)
+            return UserManager.get_table_permission(user_id, table_id)
 
         return False
     except Exception as e:
