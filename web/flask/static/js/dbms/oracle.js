@@ -15,4 +15,4 @@ function generateSrcInfo_oracle(ip, port, username, password, dbName, tableName,
     };
 
     return srcInfo;
-}
+} 

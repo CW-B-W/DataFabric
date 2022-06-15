@@ -24,7 +24,8 @@ def scan_and_import(username: str, password: str, ip: str, port: str, dbms: str,
     if db is None:
         try:
             dbs = DBMSAccessor.list_dbs(username, password, ip, port, dbms)
-        except:
+        except Exception as exception:
+            traceback.print_exc()
             return added_ids
     else:
         dbs = [db]
@@ -33,7 +34,8 @@ def scan_and_import(username: str, password: str, ip: str, port: str, dbms: str,
         for db in dbs:
             try:
                 tables = DBMSAccessor.list_tables(username, password, ip, port, dbms, db)
-            except:
+            except Exception as exception:
+                traceback.print_exc()
                 continue
             for table in tables:
                 try:
@@ -42,7 +44,8 @@ def scan_and_import(username: str, password: str, ip: str, port: str, dbms: str,
                     added_ids.append(
                         TableManager.add_table_info(f'{ip}:{port}', dbms, db, table, columns)
                     )
-                except:
+                except Exception as exception:
+                    traceback.print_exc()
                     continue
     else:
         for db in dbs:
@@ -53,7 +56,8 @@ def scan_and_import(username: str, password: str, ip: str, port: str, dbms: str,
                     added_ids.append(
                         TableManager.add_table_info(f'{ip}:{port}', dbms, db, table, columns)
                     )
-                except:
+                except Exception as exception:
+                    traceback.print_exc()
                     continue
     
     return added_ids
