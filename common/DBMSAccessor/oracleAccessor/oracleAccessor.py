@@ -27,12 +27,12 @@ def list_dbs_oracle(username, password, ip, port):
     df = pd.read_sql("select distinct OWNER from user_tab_privs", con=db_engine)
     return sorted(df.iloc[:,0].tolist())
 
-def list_tables_oracle(db, username, password, ip, port):
+def list_tables_oracle(username, password, ip, port, db):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
     df = pd.read_sql("select table_name from user_tab_privs where OWNER = '%s'" % db, con=db_engine)
     return sorted(df.iloc[:,0].tolist())
 
-def list_columns_oracle(db, table, username, password, ip, port):
+def list_columns_oracle(username, password, ip, port, db, table):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
     df = pd.read_sql("SELECT column_name FROM all_tab_cols WHERE owner = '%s' and table_name = '%s'" % (db, table), con=db_engine)
     return sorted(df.iloc[:,0].tolist())
