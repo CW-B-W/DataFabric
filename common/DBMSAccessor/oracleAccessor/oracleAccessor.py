@@ -5,8 +5,13 @@ from sqlalchemy import *
 
 def preview_table_oracle(username, password, ip, port, db, table, limit):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
-    df = pd.read_sql("SELECT * FROM %s.%s where rownum <=%s" % (db, table, limit), con=db_engine)
-    return df
+    df = pd.read_sql("SELECT * FROM %s.%s" % (db, table), con=db_engine)
+    results = df.to_dict('records')
+    for result in results:
+        for column_name,value in result.items():
+            if isinstance(value, pd.Timestamp):
+                result[column_name] = value.isoformat()
+    return results
 
 def query_table_oracle(username, password, ip, port, db, table, columns, start_time, end_time, time_column):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))

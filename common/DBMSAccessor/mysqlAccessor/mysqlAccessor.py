@@ -1,6 +1,7 @@
 import pymysql
 import pandas as pd
 from sqlalchemy import create_engine
+from datetime import datetime
 
 def preview_table_mysql(username, password, ip, port, db, table, limit):
     mysql_settings = {
@@ -14,8 +15,12 @@ def preview_table_mysql(username, password, ip, port, db, table, limit):
     mysql_db = pymysql.connect(**mysql_settings)
     cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
     cursor.execute(f"SELECT * FROM {table} LIMIT {limit};")
-    result = cursor.fetchall()
-    return result
+    results = cursor.fetchall()
+    for result in results:
+        for column_name,value in result.items():
+            if isinstance(value, datetime):
+                result[column_name] = value.isoformat()
+    return results
 
 def query_table_mysql(username, password, ip, port, db, table, columns, start_time, end_time, time_column):
     def generate_query(table, columns, start_time, end_time, time_column):

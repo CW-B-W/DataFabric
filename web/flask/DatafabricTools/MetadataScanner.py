@@ -17,7 +17,7 @@ def scan_and_import(username: str, password: str, ip: str, port: str, dbms: str,
     Returns:
         list: The table_id of added table infos
     """
-
+    
     dbms = dbms.lower()
 
     added_ids = []
