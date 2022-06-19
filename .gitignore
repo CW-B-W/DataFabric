@@ -1,8 +1,5 @@
 tmp
 docker-build.log
-data_integration/*.log
-recommender/*.log
-web/flask/*.log
 # ========== Python ==========
 # Byte-compiled / optimized / DLL files
 __pycache__/
