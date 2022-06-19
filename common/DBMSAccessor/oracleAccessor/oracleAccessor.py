@@ -35,4 +35,4 @@ def list_tables_oracle(db, username, password, ip, port):
 def list_columns_oracle(db, table, username, password, ip, port):
     db_engine = create_engine(r"oracle+cx_oracle://%s:%s@%s:%s" % (username, password, ip, port))
     df = pd.read_sql("SELECT column_name FROM all_tab_cols WHERE owner = '%s' and table_name = '%s'" % (db, table), con=db_engine)
-    return sorted(df.iloc[:,0].tolist()) 
+    return sorted(df.iloc[:,0].tolist())
