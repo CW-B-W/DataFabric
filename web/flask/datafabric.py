@@ -14,6 +14,8 @@ from DatafabricManager import SearchEngine
 from DatafabricManager.TransactionLogging import TransactionLogging
 transaction_logging = TransactionLogging('TransactionLogs')
 
+from DatafabricTools import MetadataScanner
+
 from InternalDB.RedisDB import RedisDB
 cache_db = RedisDB(db=0)
 
@@ -398,3 +400,44 @@ def data_integration_serving(serving_name):
             else:
                 return
     return app.response_class(recv_file(s), mimetype='text/csv')
+
+@app.route('/supported_dbms')
+def supported_dbms():
+    return json.dumps(DBMSAccessor.get_supported_dbms())
+
+@app.route('/metadata_scanner')
+def metadata_scanner_page():
+    return render_template('metadata_scanner.html')
+
+@app.route('/metadata_scan')
+def metadata_scan():
+    ip      = request.args.get('ip', type=str)
+    port    = request.args.get('port', type=str)
+    conn    = f'{ip}:{port}'
+    dbms    = request.args.get('dbms', type=str)
+    db      = request.args.get('db', default=None, type=str)
+    tables  = request.args.get('tables', default=None, type=str)
+    try:
+        user_info = UserManager.get_user_info(session['user_id'])
+        username = user_info['db_account'][dbms][conn]['username']
+        password = user_info['db_account'][dbms][conn]['password']
+        scanned = MetadataScanner.scan(username, password, ip, port, dbms, db, tables)
+        return json.dumps(scanned)
+    except Exception as e:
+        return str(e), 500
+
+@app.route('/add_tableinfo', methods=['POST'])
+def add_tableinfo():
+    if request.method == 'POST':
+        try:
+            table_infos = json.loads(request.data.decode('utf-8'))
+            added_ids = []
+            for table_info in table_infos:
+                added_ids.append(
+                    TableManager.add_table_info(table_info['Connection'], table_info['DBMS'], table_info['DB'], table_info['TableName'], table_info['Columns'])
+                )
+            return json.dumps(added_ids)
+        except Exception as e:
+            return str(e), 500
+    else:
+        return 'Only support POST', 400

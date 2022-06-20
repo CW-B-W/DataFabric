@@ -1,6 +1,7 @@
 from importlib import import_module
 from pandas import DataFrame
 from sqlalchemy import create_engine
+import os
 
 loaded_module = {}
 
@@ -9,6 +10,15 @@ def get_module_func(mod_name, func_name):
         loaded_module[mod_name] = import_module(f'.{mod_name}.{mod_name}', f'DBMSAccessor')
     mod = loaded_module[mod_name]
     return getattr(mod, func_name)
+
+def get_supported_dbms():
+    supported = []
+    dirs = os.listdir('/DBMSAccessor')
+    for dir in dirs:
+        fulldir = os.path.join('/DBMSAccessor', dir)
+        if os.path.isdir(fulldir) and dir.endswith('Accessor'):
+            supported.append(dir.replace('Accessor', ''))
+    return supported
 
 
 def preview_table(
