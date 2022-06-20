@@ -1,3 +1,5 @@
+subTaskInfos = [];
+
 $(document).ready(function() {
     for (let i = 0; i < 2; ++i) {
         $(`#ColumnsSelect${i}`).dblclick(function() {
@@ -5,7 +7,53 @@ $(document).ready(function() {
             addJoinPairs(columnsSelected);            
         });
     }
+
+    if (tableInfos.length > 2) {
+        $('#NextTaskButton').show();
+    }
+    else {
+        $('#SendRequestButton').show();
+    }
+    renderPage(tableInfos.slice(0, 2));
 });
+
+function renderPage(tableInfos) {
+    let len = Math.min(2, tableInfos.length);
+    for (let i = 0; i < len; ++i) {
+        $(`#DBMSText${i}`).text(tableInfos[i]['DBMS']);
+        $(`#ServerText${i}`).val(tableInfos[i]['Connection']);
+        $(`#UsernameText${i}`).val(tableInfos[i]['Username']);
+        $(`#PasswordText${i}`).val(tableInfos[i]['Password']);
+        $(`#TableText${i}`).val(tableInfos[i]['TableName']);
+        
+        let timeColumnSelectElem = $(`#TimeColumnSelect${i}`);
+        let columnsSelectElem    = $(`#ColumnsSelect${i}`);
+        timeColumnSelectElem.empty();
+        columnsSelectElem.empty();
+        let columns = tableInfos[i]['Columns'].split(',');
+        for (let c in columns) {
+            let col = columns[c];
+            let newOpt = $(document.createElement('option'));
+            newOpt.text(col);
+            timeColumnSelectElem.append(newOpt);
+            columnsSelectElem.append(newOpt.clone());
+        }
+        {
+            let newOpt = $(document.createElement('option'));
+            newOpt.val('');
+            timeColumnSelectElem.prepend(newOpt);
+            timeColumnSelectElem.val(0);
+            columnsSelectElem.append(newOpt.clone());
+        }
+
+        $(`#TimeStartInput${i}`).text('');
+        $(`#TimeStartInput${i}`).val('');
+        $(`#TimeEndInput${i}`).text('');
+        $(`#TimeEndInput${i}`).val('');
+    }
+    while (popJoinTable())
+        ;
+}
 
 function addJoinPairs(columnsSelected)
 {
@@ -54,6 +102,24 @@ function popJoinTable()
     return true;
 }
 
+function nextTask()
+{
+    // merge two tasks into one task
+    let joinedSubtask = createJoinSubtask(tableInfos.slice(0, 2));
+    subTaskInfos.push(joinedSubtask);
+    let joinedTableInfo = createJoinTableInfo(joinedSubtask);
+    tableInfos.shift();
+    tableInfos.shift();
+    tableInfos.unshift(joinedTableInfo);
+
+    if (tableInfos.length == 1) {
+        $('#NextTaskButton').hide();
+        $('#SendRequestButton').show();
+    }
+    else {
+        renderPage(tableInfos.slice(0, 2));
+    }
+}
 
 function sendTaskRequest()
 {
@@ -61,15 +127,15 @@ function sendTaskRequest()
 
     $.ajax({
         "type": "POST",
-        "dataType": "json",
+        "dataType": "text",
         "contentType": "application/json",
         "url": "/data_integration",
         "data": JSON.stringify(taskInfo),
         success: function(result) {
-            
+            // location.href = `/data_integration/status?task_id=${result}`
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            
+            alert('failed');
         }
     });
 
@@ -80,16 +146,16 @@ function createTaskInfo()
 {
     let taskInfo = {
         'task_id'   : _uuid(),
-        'task_list' : [createJoinSubtask()]
+        'task_list' : subTaskInfos
     }
     return taskInfo;
 }
 
-function createJoinSubtask()
+function createJoinSubtask(tableInfos)
 {
     let srcInfos = []
     for (let i = 0; i < 2; ++i) {
-        let srcInfo = getJoinSrcInfo(i);
+        let srcInfo = getJoinSrcInfo(tableInfos, i);
         if (srcInfo)
             srcInfos.push(srcInfo);
     }
@@ -114,7 +180,7 @@ function createJoinSubtask()
     return subtask;
 }
 
-function getJoinSrcInfo(srcIdx) {
+function getJoinSrcInfo(tableInfos, srcIdx) {
     if (tableInfos[srcIdx]['DBMS'].toLowerCase() == 'none')
         return null;
 
@@ -272,4 +338,19 @@ function _uuid() {
 function toFormattedKey(key)
 {
     return key.replace(/[:.]/g, "_").replace(/[@]/g, "").toUpperCase();
+}
+
+function createJoinTableInfo(joinedSubtask)
+{
+    let joinedTableInfo = {
+        'ID' : -1,
+        'Connection' : '',
+        'Username' : '',
+        'Password' : '',
+        'DBMS' : 'Dataframe',
+        'DB' : '',
+        'TableName' : '',
+        'Columns' : joinedSubtask['results']['column_order'].join(',')
+    }
+    return joinedTableInfo;
 }
