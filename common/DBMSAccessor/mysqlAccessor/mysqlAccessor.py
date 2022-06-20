@@ -48,5 +48,5 @@ def list_tables_mysql(username, password, ip, port, db):
 
 def list_columns_mysql(username, password, ip, port, db, table):
     engine = create_engine("mysql+pymysql://%s:%s@%s:%s/%s" % (username, password, ip, port, db))
-    df = pd.read_sql("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'" % (db, table), con=engine);
+    df = pd.read_sql("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'" % (db, table), con=engine)
     return sorted(df['COLUMN_NAME'].tolist())
