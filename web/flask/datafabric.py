@@ -10,6 +10,7 @@ import socket
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
 from DatafabricManager import UserManager
+from DatafabricManager import SearchEngine
 from DatafabricManager.TransactionLogging import TransactionLogging
 transaction_logging = TransactionLogging('TransactionLogs')
 
@@ -134,7 +135,7 @@ def search():
         query_id = f"user={session['user_id']}&search={search_text}&page={page_base+1}~{page_base+5}"
         result = cache_db.get_json(query_id)
         if result is None:
-            result = CatalogManager.search(search_text, page_base, 50)
+            result = SearchEngine.search(search_text, page_base, 50)
             cache_db.set_json(query_id, result, 15*60)
         
         result_page = result[10*(page-page_base-1):10*(page-page_base)]

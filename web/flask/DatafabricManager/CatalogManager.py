@@ -4,11 +4,11 @@ from DatafabricManager import TableManager
 mysqldb = MySQLDB('datafabric')
 
 def search(search_text: str, start_page: int, n_items: int=50) -> list:
-    """Search catalogs, tables, columns with search_text
+    """Search tables with names in datafabric.CatalogManager
 
     Args:
-        search_text (str): search text
-        start_page (int): start_page. each page has 10 items
+        search_text (str): search catalog name
+        start_page (int): start_page (start from 0). each page has 10 items
         n_items (int, optional): number of items to return. Defaults to 50.
 
     Returns:
@@ -16,7 +16,7 @@ def search(search_text: str, start_page: int, n_items: int=50) -> list:
     """
     result = mysqldb.query(
         f"SELECT * FROM CatalogManager "
-        f"WHERE LOWER(Keywords) LIKE '%{search_text.lower()}%' LIMIT {start_page*10},{n_items};"
+        f"WHERE LOWER(CatalogName) LIKE '%{search_text.lower()}%' LIMIT {start_page*10},{n_items};"
     )
     return result
 
