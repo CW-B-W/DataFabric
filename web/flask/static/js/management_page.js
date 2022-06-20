@@ -55,6 +55,7 @@ function showCatalogSearchResults(result) {
         newOption.val(catalog['ID']);
         root.append(newOption);
     }
+    getCatalog(result[0]['ID']);
 }
 
 function getCatalog(catalogId) {
