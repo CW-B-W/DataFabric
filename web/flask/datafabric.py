@@ -61,9 +61,11 @@ def validate_permission(action_info: dict) -> bool:
         if action_info['action'] == 'catalog_page' or action_info['action'] == 'get_catalog':
             catalog_id = action_info['catalog_id']
             return UserManager.get_catalog_permission(user_id, catalog_id)
-        elif action_info['action'] == 'table_preview':
+        elif action_info['action'] == 'table_preview' or action_info['action'] == 'get_tableinfo':
             table_id = action_info['table_id']
             return UserManager.get_table_permission(user_id, table_id)
+        elif action_info['action'] == 'management' or action_info['action'] == 'manage_catalog':
+            return user_id == 0
 
         return False
     except Exception as e:
@@ -107,6 +109,14 @@ def logout():
     if 'user_id' in session:
         del session['user_id']
     return redirect(url_for('login'))
+
+@app.route('/management')
+def management():
+    if not validate_permission({'action': 'management'}):
+        transaction_logging.add_transaction('management', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+        return "Permission denied.", 403
+    
+    return render_template('management.html')
 
 @app.route('/searchhints')
 def searchhints():
@@ -196,16 +206,83 @@ def get_catalog():
         transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
-    query_id = f"catalog={catalog_id}"
-    catalog = cache_db.get_json(query_id)
+    catalog = CatalogManager.get_catalog(catalog_id)
     if catalog is None:
-        catalog = CatalogManager.get_catalog(catalog_id)
-        if catalog is None:
-            return "Invalid catalog_id"
-        cache_db.set_json(query_id, catalog, 60*60)
+        return "Invalid catalog_id"
     
     transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return json.dumps(catalog)
+
+@app.route('/manage_catalog')
+def manage_catalog():
+    if not validate_user():
+        transaction_logging.add_transaction('manage_catalog', {}, '', 'FAILED', "Redirecting to login page")
+        return redirect(url_for('login'))
+
+    if not validate_permission({'action': 'manage_catalog'}):
+        transaction_logging.add_transaction('manage_catalog', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+        return "Permission denied.", 403
+
+    catalog_id = request.args.get('catalog_id', type=int)
+    action = request.args.get('action', type=str)
+    if action == 'add_table':
+        table_id = request.args.get('table_id', type=int)
+        try:
+            status = CatalogManager.add_table_into_catalog(catalog_id, table_id)
+            if status:
+                return 'ok'
+            else:
+                return 'already exists in catalog'
+        except Exception as e:
+            return str(e), 500
+    elif action == 'del_table':
+        table_id = request.args.get('table_id', type=int)
+        try:
+            status = CatalogManager.del_table_from_catalog(catalog_id, table_id)
+            if status:
+                return 'ok'
+            else:
+                return 'not exists in catalog'
+        except Exception as e:
+            return str(e), 500
+    
+    return 'action not found', 400
+
+@app.route('/search_catalog')
+def search_catalog():
+    if not validate_user():
+        transaction_logging.add_transaction('search_catalog', {}, '', 'FAILED', "Redirecting to login page")
+        return redirect(url_for('login'))
+
+    try:
+        search_text = request.args.get('text', default='', type=str)
+        if search_text == '':
+            return json.dumps([])
+
+        result = CatalogManager.search(search_text, 0, 50)
+        
+        transaction_logging.add_transaction('search_catalog', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+        return json.dumps(result)
+    except Exception as e:
+        return str(e), 500
+
+@app.route('/get_tableinfo')
+def get_tableinfo():
+    if not validate_user():
+        transaction_logging.add_transaction('get_tableinfo', {}, '', 'FAILED', "Redirecting to login page")
+        return redirect(url_for('login'))
+
+    table_id = request.args.get('table_id', type=int)
+    if not validate_permission({'action': 'get_tableinfo','table_id' : table_id}):
+        transaction_logging.add_transaction('get_tableinfo', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+        return "Permission denied.", 403
+
+    table_info = TableManager.get_table_info(table_id)
+    if table_info is None:
+        return "Invalid table_id"
+    
+    transaction_logging.add_transaction('get_tableinfo', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+    return json.dumps(table_info)
 
 @app.route('/table_preview')
 def table_preview():

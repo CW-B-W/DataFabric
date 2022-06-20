@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <script src='{{ url_for('static', filename="js/management_page.js") }}' charset="UTF-8"></script>
+
+  <style>
+    body {
+      padding-top: 6%;
+      padding-left: 6%;
+      padding-right: 6%;
+    }
+  </style>
+</head>
+
+<body>
+  
+  <div class="container">
+    <div class="row">
+      <input type="text" placeholder="Search for Catalog" class="form-control" id="CatalogSearchText"></input>
+    </div>
+    <div class="row">
+      <button type="button" class="btn btn-success w-100" id="CatalogSearchButton">Search</button>
+    </div>
+    <br>
+    <div class="row">
+      <select class="form-select w-100" id="CatalogSelect">
+      </select>
+    </div>
+  </div>
+
+  <br>
+
+  <table class="table" id="CatalogTables">
+    <thead>
+      <tr>
+        <th scope="col">TableID</th>
+        <th scope="col">TableName</th>
+        <th scope="col">Connection</th>
+        <th scope="col">DBMS</th>
+        <th scope="col">DB</th>
+        <th scope="col">Remove</th>
+      </tr>
+    </thead>
+    <tbody>
+      <template id="TableRowTemplate">
+        <tr>
+          <th scope="row">1</th>
+          <td>MyTable1</td>
+          <td>datafabric-mysql:3306</td>
+          <td>MySQL</td>
+          <td>testdata</td>
+          <td><button type="button" class="btn btn-danger">Remove</button></td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+
+</body>
+</html>

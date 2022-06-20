@@ -17,7 +17,7 @@ function initializePage(catalogId) {
             renderPage(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            console.warn("[querySearchHints] Connection Failed!");
+            console.warn("Connection Failed!");
         }
     });
 }

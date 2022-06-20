@@ -43,7 +43,7 @@ function queryRecommendations() {
             showRecommendResults(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            console.warn("[querySearchHints] Connection Failed!");
+            console.warn("Connection Failed!");
         }
     });
 }
@@ -76,7 +76,7 @@ function querySearchHints(text) {
             showSearchHints(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            console.warn("[querySearchHints] Connection Failed!");
+            console.warn("Connection Failed!");
         }
     });
 }
@@ -212,15 +212,14 @@ function setTableContent(table, tableContent) {
 function logout() {
     $.ajax({
         "type": "GET",
-        "dataType": "json",
-        "contentType": "application/json",
+        "contentType": "text/html",
         "url": `/logout`,
         "timeout": 60000,
         success: function(result) {
             location.href = '/';
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            location.href = '/';
+            
         }
     });
 }
