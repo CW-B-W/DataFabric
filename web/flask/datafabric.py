@@ -404,18 +404,22 @@ def data_integration_serving(serving_name):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect_ex(('datafabric-data-integration', 5001))
     s.send(str.encode(serving_name))
-    def recv_file(s):
-        while (True):
-            try:
-                received_bytes = s.recv(16*1024*1024)
-                print(received_bytes)
-            except:
-                return
-            if received_bytes.decode() != '':
-                yield received_bytes
-            else:
-                return
-    return app.response_class(recv_file(s), mimetype='text/csv')
+    status = s.recv(2).decode('utf-8')
+    if status == 'ok':
+        def recv_file(s):
+            while (True):
+                try:
+                    received_bytes = s.recv(16*1024*1024)
+                    print(received_bytes)
+                except:
+                    return
+                if received_bytes.decode() != '':
+                    yield received_bytes
+                else:
+                    return
+        return app.response_class(recv_file(s), mimetype='text/csv')
+    else:
+        return 'Not Found', 404
 
 @app.route('/supported_dbms')
 def supported_dbms():

@@ -21,11 +21,12 @@ def data_serving():
         filepath = f'/data_serving/{filename}'
         if os.path.exists(filepath):
             print(f'[data_serving] sending file {filename}')
+            client_socket.send(str.encode(f'ok'))
             with open(filepath, 'rb') as fp:
                 client_socket.sendfile(fp)
         else:
             print(f'[data_serving] file not found')
-            client_socket.send(str.encode(f'File {filename} Not Found.'))
+            client_socket.send(str.encode(f'no'))
         client_socket.close()
         print(f'[data_serving] client_socket closed')
         sys.stdout.flush()
