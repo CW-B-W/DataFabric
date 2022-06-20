@@ -34,7 +34,7 @@ function catalogSearch(searchText) {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/search_catalog?text=${searchText}`,
+        "url": `/catalog/search?text=${searchText}`,
         "timeout": 30000,
         success: function(result) {
             showCatalogSearchResults(result);
@@ -63,7 +63,7 @@ function getCatalog(catalogId) {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/get_catalog?catalog_id=${catalogId}`,
+        "url": `/catalog/get?catalog_id=${catalogId}`,
         "timeout": 30000,
         success: function(result) {
             showCatalog(result);
@@ -83,7 +83,7 @@ function showCatalog(result) {
             "type": "GET",
             "dataType": "json",
             "contentType": "application/json",
-            "url": `/get_tableinfo?table_id=${tableId}`,
+            "url": `/tableinfo/get?table_id=${tableId}`,
             "timeout": 30000,
             success: function(result) {
                 appendToTable(result);
@@ -135,7 +135,7 @@ function tableSearch(searchText) {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/search_tableinfo?text=${searchText}`,
+        "url": `/tableinfo/search?text=${searchText}`,
         "timeout": 30000,
         success: function(result) {
             showTableSearchResults(result);
@@ -162,14 +162,14 @@ function addTableIntoCatalog(catalogId, tableId) {
     $.ajax({
         "type": "GET",
         "contentType": "text/plain",
-        "url": `/manage_catalog?action=add_table&catalog_id=${catalogId}&table_id=${tableId}`,
+        "url": `/catalog/manage?action=add_table&catalog_id=${catalogId}&table_id=${tableId}`,
         "timeout": 30000,
         success: function(result) {
             $.ajax({
                 "type": "GET",
                 "dataType": "json",
                 "contentType": "application/json",
-                "url": `/get_tableinfo?table_id=${tableId}`,
+                "url": `/tableinfo/get?table_id=${tableId}`,
                 "timeout": 30000,
                 success: function(result) {
                     appendToTable(result);
@@ -189,7 +189,7 @@ function delTableFromCatalog(catalogId, tableId) {
     $.ajax({
         "type": "GET",
         "contentType": "text/plain",
-        "url": `/manage_catalog?action=del_table&catalog_id=${catalogId}&table_id=${tableId}`,
+        "url": `/catalog/manage?action=del_table&catalog_id=${catalogId}&table_id=${tableId}`,
         "timeout": 30000,
         success: function(result) {
             removeFromTable(tableId);

@@ -11,7 +11,7 @@ function initializePage(catalogId) {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/get_catalog?catalog_id=${catalogId}`,
+        "url": `/catalog/get?catalog_id=${catalogId}`,
         "timeout": 30000,
         success: function(result) {
             renderPage(result);

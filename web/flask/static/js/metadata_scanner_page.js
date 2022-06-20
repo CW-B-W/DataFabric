@@ -48,7 +48,7 @@ function scan(ip, port, dbms)
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/metadata_scan?ip=${ip}&port=${port}&dbms=${dbms}`,
+        "url": `/metadata_scanner/scan?ip=${ip}&port=${port}&dbms=${dbms}`,
         "timeout": 30000,
         success: function(result) {
             for (let i in result) {
@@ -91,7 +91,7 @@ function addToDatafabric() {
         "type": "POST",
         "dataType": "json",
         "contentType": "application/json",
-        "url": "/add_tableinfo",
+        "url": "/tableinfo/add",
         "data": JSON.stringify(addList),
         success: function(result) {
             alert(result);

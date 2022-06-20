@@ -60,13 +60,13 @@ def validate_permission(action_info: dict) -> bool:
             return False
 
         # simple example of permission check
-        if action_info['action'] == 'catalog_page' or action_info['action'] == 'get_catalog':
+        if action_info['action'] == 'catalog_page' or action_info['action'] == 'catalog_get':
             catalog_id = action_info['catalog_id']
             return UserManager.get_catalog_permission(user_id, catalog_id)
-        elif action_info['action'] == 'table_preview' or action_info['action'] == 'get_tableinfo':
+        elif action_info['action'] == 'table_preview' or action_info['action'] == 'tableinfo_get':
             table_id = action_info['table_id']
             return UserManager.get_table_permission(user_id, table_id)
-        elif action_info['action'] == 'management' or action_info['action'] == 'manage_catalog':
+        elif action_info['action'] == 'management' or action_info['action'] == 'catalog_manage':
             return user_id == 0
 
         return False
@@ -157,7 +157,7 @@ def search():
     except Exception as e:
         return str(e), 500
 
-@app.route('/recommend')
+@app.route('/recommender/recommend')
 def recommend():
     if not validate_user():
         transaction_logging.add_transaction('recommend', {}, '', 'FAILED', "Redirecting to login page")
@@ -183,7 +183,7 @@ def recommend():
     except Exception as e:
         return str(e), 500
 
-@app.route('/catalog_page')
+@app.route('/catalog')
 def catalog_page():
     if not validate_user():
         transaction_logging.add_transaction('catalog_page', {}, '', 'FAILED', "Redirecting to login page")
@@ -197,32 +197,32 @@ def catalog_page():
     transaction_logging.add_transaction('catalog_page', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return render_template('catalog.html', catalogId = catalog_id)
 
-@app.route('/get_catalog')
-def get_catalog():
+@app.route('/catalog/get')
+def catalog_get():
     if not validate_user():
-        transaction_logging.add_transaction('get_catalog', {}, '', 'FAILED', "Redirecting to login page")
+        transaction_logging.add_transaction('catalog_get', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     catalog_id = request.args.get('catalog_id', type=int)
-    if not validate_permission({'action': 'get_catalog','catalog_id' : catalog_id}):
-        transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+    if not validate_permission({'action': 'catalog_get','catalog_id' : catalog_id}):
+        transaction_logging.add_transaction('catalog_get', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
     catalog = CatalogManager.get_catalog(catalog_id)
     if catalog is None:
         return "Invalid catalog_id"
     
-    transaction_logging.add_transaction('get_catalog', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+    transaction_logging.add_transaction('catalog_get', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return json.dumps(catalog)
 
-@app.route('/manage_catalog')
-def manage_catalog():
+@app.route('/catalog/manage')
+def catalog_manage():
     if not validate_user():
-        transaction_logging.add_transaction('manage_catalog', {}, '', 'FAILED', "Redirecting to login page")
+        transaction_logging.add_transaction('catalog_manage', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
-    if not validate_permission({'action': 'manage_catalog'}):
-        transaction_logging.add_transaction('manage_catalog', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+    if not validate_permission({'action': 'catalog_manage'}):
+        transaction_logging.add_transaction('catalog_manage', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
     catalog_id = request.args.get('catalog_id', type=int)
@@ -250,10 +250,10 @@ def manage_catalog():
     
     return 'action not found', 400
 
-@app.route('/search_catalog')
-def search_catalog():
+@app.route('/catalog/search')
+def catalog_search():
     if not validate_user():
-        transaction_logging.add_transaction('search_catalog', {}, '', 'FAILED', "Redirecting to login page")
+        transaction_logging.add_transaction('catalog_search', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     try:
@@ -263,33 +263,33 @@ def search_catalog():
 
         result = CatalogManager.search(search_text, 0, 50)
         
-        transaction_logging.add_transaction('search_catalog', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+        transaction_logging.add_transaction('catalog_search', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
 
-@app.route('/get_tableinfo')
-def get_tableinfo():
+@app.route('/tableinfo/get')
+def tableinfo_get():
     if not validate_user():
-        transaction_logging.add_transaction('get_tableinfo', {}, '', 'FAILED', "Redirecting to login page")
+        transaction_logging.add_transaction('tableinfo_get', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     table_id = request.args.get('table_id', type=int)
-    if not validate_permission({'action': 'get_tableinfo','table_id' : table_id}):
-        transaction_logging.add_transaction('get_tableinfo', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
+    if not validate_permission({'action': 'tableinfo_get','table_id' : table_id}):
+        transaction_logging.add_transaction('tableinfo_get', request.args.to_dict(), session['user_id'], 'FAILED', 'Permission denied.')
         return "Permission denied.", 403
 
     table_info = TableManager.get_table_info(table_id)
     if table_info is None:
         return "Invalid table_id"
     
-    transaction_logging.add_transaction('get_tableinfo', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+    transaction_logging.add_transaction('tableinfo_get', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return json.dumps(table_info)
 
-@app.route('/search_tableinfo')
-def search_tableinfo():
+@app.route('/tableinfo/search')
+def tableinfo_search():
     if not validate_user():
-        transaction_logging.add_transaction('search_tableinfo', {}, '', 'FAILED', "Redirecting to login page")
+        transaction_logging.add_transaction('tableinfo_search', {}, '', 'FAILED', "Redirecting to login page")
         return redirect(url_for('login'))
 
     try:
@@ -299,10 +299,26 @@ def search_tableinfo():
 
         result = TableManager.search(search_text, 0, 50)
         
-        transaction_logging.add_transaction('search_tableinfo', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+        transaction_logging.add_transaction('tableinfo_search', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
         return json.dumps(result)
     except Exception as e:
         return str(e), 500
+
+@app.route('/tableinfo/add', methods=['POST'])
+def tableinfo_add():
+    if request.method == 'POST':
+        try:
+            table_infos = json.loads(request.data.decode('utf-8'))
+            added_ids = []
+            for table_info in table_infos:
+                added_ids.append(
+                    TableManager.add_table_info(table_info['Connection'], table_info['DBMS'], table_info['DB'], table_info['TableName'], table_info['Columns'])
+                )
+            return json.dumps(added_ids)
+        except Exception as e:
+            return str(e), 500
+    else:
+        return 'Only support POST', 400
 
 @app.route('/table_preview')
 def table_preview():
@@ -338,7 +354,7 @@ def table_preview():
     except Exception as e:
         return str(e), 500
 
-@app.route('/train_recommender')
+@app.route('/recommender/train')
 def train_recommender():
     response = requests.get('http://datafabric-recommender:5000/train?' + request.query_string.decode())
     return response.text
@@ -409,8 +425,8 @@ def supported_dbms():
 def metadata_scanner_page():
     return render_template('metadata_scanner.html')
 
-@app.route('/metadata_scan')
-def metadata_scan():
+@app.route('/metadata_scanner/scan')
+def metadata_scanner_scan():
     ip      = request.args.get('ip', type=str)
     port    = request.args.get('port', type=str)
     conn    = f'{ip}:{port}'
@@ -425,19 +441,3 @@ def metadata_scan():
         return json.dumps(scanned)
     except Exception as e:
         return str(e), 500
-
-@app.route('/add_tableinfo', methods=['POST'])
-def add_tableinfo():
-    if request.method == 'POST':
-        try:
-            table_infos = json.loads(request.data.decode('utf-8'))
-            added_ids = []
-            for table_info in table_infos:
-                added_ids.append(
-                    TableManager.add_table_info(table_info['Connection'], table_info['DBMS'], table_info['DB'], table_info['TableName'], table_info['Columns'])
-                )
-            return json.dumps(added_ids)
-        except Exception as e:
-            return str(e), 500
-    else:
-        return 'Only support POST', 400

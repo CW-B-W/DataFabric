@@ -37,7 +37,7 @@ function queryRecommendations() {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/recommend`,
+        "url": `/recommender/recommend`,
         "timeout": 1000,
         success: function(result) {
             showRecommendResults(result);
@@ -57,7 +57,7 @@ function showRecommendResults(results) {
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
         clon.find("[name=CatalogName]").eq(0).text(`${item['CatalogName']} (score: ${ratings[i]})`);
-        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog_page?catalog_id=${item['ID']}`)
+        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog?catalog_id=${item['ID']}`)
         genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), item['TableMembers'], item['TableIds']);
         clon.find("[name=Description]").eq(0).text(item['Description']);
         $("#SearchResults").append(clon);
@@ -117,7 +117,7 @@ function showSearchResults(results) {
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
         clon.find("[name=CatalogName]").eq(0).text(result['CatalogName']);
-        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog_page?catalog_id=${result['ID']}`)
+        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog?catalog_id=${result['ID']}`)
         genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['TableMembers'], result['TableIds']);
         clon.find("[name=Description]").eq(0).text(result['Description']);
         $("#SearchResults").append(clon);
