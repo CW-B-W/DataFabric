@@ -114,7 +114,7 @@ def integrate(task_dict: dict):
             end_time   = d['end_time']
             time_col   = d['time_column']
 
-            if dbms != 'dataframe' or dbms != 'none':
+            if dbms != 'dataframe' and dbms != 'none':
                 try:
                     queried_df = DBMSAccessor.query_table(
                         username, password,
