@@ -1,6 +1,7 @@
 import pymysql
 import pandas as pd
 from sqlalchemy import create_engine
+from datetime import datetime
 
 def preview_table_mysql(username, password, ip, port, db, table, limit):
     mysql_settings = {
@@ -14,8 +15,12 @@ def preview_table_mysql(username, password, ip, port, db, table, limit):
     mysql_db = pymysql.connect(**mysql_settings)
     cursor = mysql_db.cursor(pymysql.cursors.DictCursor)
     cursor.execute(f"SELECT * FROM {table} LIMIT {limit};")
-    result = cursor.fetchall()
-    return result
+    results = cursor.fetchall()
+    for result in results:
+        for column_name,value in result.items():
+            if isinstance(value, datetime):
+                result[column_name] = value.isoformat()
+    return results
 
 def query_table_mysql(username, password, ip, port, db, table, columns, start_time, end_time, time_column):
     def generate_query(table, columns, start_time, end_time, time_column):
@@ -43,5 +48,5 @@ def list_tables_mysql(username, password, ip, port, db):
 
 def list_columns_mysql(username, password, ip, port, db, table):
     engine = create_engine("mysql+pymysql://%s:%s@%s:%s/%s" % (username, password, ip, port, db))
-    df = pd.read_sql("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'" % (db, table), con=engine);
+    df = pd.read_sql("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'" % (db, table), con=engine)
     return sorted(df['COLUMN_NAME'].tolist())
