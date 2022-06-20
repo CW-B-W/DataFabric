@@ -8,14 +8,24 @@ $(document).ready(function (){
         }
     });
 
-    $('#CatalogSearchButton').click(function() {
-        let searchText = $('#CatalogSearchText').val();
-        catalogSearch(searchText);
+    $("#TableSearchText").keypress(function(e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == 13) {
+            e.preventDefault();
+            var text = $(this).val();
+            tableSearch(text);
+        }
     });
 
     $('#CatalogSelect').change(function() {
         let catalogId = $('#CatalogSelect').find(':selected').val();
         getCatalog(catalogId);
+    });
+
+    $('#TableAddButton').click(function() {
+        let catalogId = $('#CatalogSelect').find(':selected').val();
+        let tableId   = $('#TableSelect').find(':selected').val();
+        addTableIntoCatalog(catalogId, tableId);
     });
 });
 
@@ -75,7 +85,7 @@ function showCatalog(result) {
             "url": `/get_tableinfo?table_id=${tableId}`,
             "timeout": 30000,
             success: function(result) {
-                addToTable(result);
+                appendToTable(result);
             },
             error: function(jqXHR, JQueryXHR, textStatus) {
                 console.warn("Connection Failed!");
@@ -89,7 +99,7 @@ function clearTable() {
     tableElem.find('tr').remove();
 }
 
-function addToTable(result) {
+function appendToTable(result) {
     let id   = result['ID'];
     let name = result['TableName'];
     let conn = result['Connection'];
@@ -109,18 +119,7 @@ function addToTable(result) {
     newRow.children().eq(5).click(function() {
         let catalogId = $('#CatalogSelect').find(':selected').val();
         let tableId   = $(this).val();
-        $.ajax({
-            "type": "GET",
-            "contentType": "text/plain",
-            "url": `/manage_catalog?action=del_table&catalog_id=${catalogId}&table_id=${tableId}`,
-            "timeout": 30000,
-            success: function(result) {
-                removeFromTable(tableId);
-            },
-            error: function(jqXHR, JQueryXHR, textStatus) {
-                console.warn("Connection Failed!");
-            }
-        });
+        delTableFromCatalog(catalogId, tableId);
     });
 }
 
@@ -128,4 +127,74 @@ function removeFromTable(tableId) {
     $('#CatalogTables').find('th').filter(function() {
         return $(this).text() == tableId;
     }).parent().remove();
+}
+
+function tableSearch(searchText) {
+    $.ajax({
+        "type": "GET",
+        "dataType": "json",
+        "contentType": "application/json",
+        "url": `/search_tableinfo?text=${searchText}`,
+        "timeout": 30000,
+        success: function(result) {
+            showTableSearchResults(result);
+        },
+        error: function(jqXHR, JQueryXHR, textStatus) {
+            console.warn("Connection Failed!");
+        }
+    });
+}
+
+function showTableSearchResults(result) {
+    let root = $('#TableSelect');
+    root.empty();
+    for (let i in result) {
+        let catalog   = result[i];
+        let newOption = $(document.createElement('option'));
+        newOption.text(catalog['TableName']);
+        newOption.val(catalog['ID']);
+        root.append(newOption);
+    }
+}
+
+function addTableIntoCatalog(catalogId, tableId) {
+    $.ajax({
+        "type": "GET",
+        "contentType": "text/plain",
+        "url": `/manage_catalog?action=add_table&catalog_id=${catalogId}&table_id=${tableId}`,
+        "timeout": 30000,
+        success: function(result) {
+            $.ajax({
+                "type": "GET",
+                "dataType": "json",
+                "contentType": "application/json",
+                "url": `/get_tableinfo?table_id=${tableId}`,
+                "timeout": 30000,
+                success: function(result) {
+                    appendToTable(result);
+                },
+                error: function(jqXHR, JQueryXHR, textStatus) {
+                    console.warn("Connection Failed!");
+                }
+            });
+        },
+        error: function(jqXHR, JQueryXHR, textStatus) {
+            console.warn("Connection Failed!");
+        }
+    });
+}
+
+function delTableFromCatalog(catalogId, tableId) {
+    $.ajax({
+        "type": "GET",
+        "contentType": "text/plain",
+        "url": `/manage_catalog?action=del_table&catalog_id=${catalogId}&table_id=${tableId}`,
+        "timeout": 30000,
+        success: function(result) {
+            removeFromTable(tableId);
+        },
+        error: function(jqXHR, JQueryXHR, textStatus) {
+            console.warn("Connection Failed!");
+        }
+    });
 }

@@ -284,6 +284,24 @@ def get_tableinfo():
     transaction_logging.add_transaction('get_tableinfo', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
     return json.dumps(table_info)
 
+@app.route('/search_tableinfo')
+def search_tableinfo():
+    if not validate_user():
+        transaction_logging.add_transaction('search_tableinfo', {}, '', 'FAILED', "Redirecting to login page")
+        return redirect(url_for('login'))
+
+    try:
+        search_text = request.args.get('text', default='', type=str)
+        if search_text == '':
+            return json.dumps([])
+
+        result = TableManager.search(search_text, 0, 50)
+        
+        transaction_logging.add_transaction('search_tableinfo', request.args.to_dict(), session['user_id'], 'SUCCEEDED', None)
+        return json.dumps(result)
+    except Exception as e:
+        return str(e), 500
+
 @app.route('/table_preview')
 def table_preview():
     if not validate_user():
