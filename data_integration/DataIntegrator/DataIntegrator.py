@@ -75,7 +75,7 @@ def integrate(task_dict: dict):
     except Exception as e:
         print(str(e), file=sys.stderr)
         send_task_status(str(-1), TASKSTATUS_UNKNOWN, str(e))
-        exit(1)
+        return 1
 
     with open(f'/task_requests/{task_id}.json', 'w') as wf:
         json.dump(task_dict, wf)
@@ -128,7 +128,7 @@ def integrate(task_dict: dict):
                 except Exception as e:
                     logging.error(f"Failed to retrieve data from {dbms}" + str(e))
                     send_task_status(task_id, TASKSTATUS_FAILED, f"Failed to retrieve data from {dbms}" + str(e))
-                    exit(1)
+                    return 1
                 logging.info(f'Finished retrieving table {i} from {dbms}')
                 
                 # make all column names uppercase
@@ -146,7 +146,7 @@ def integrate(task_dict: dict):
                 except Exception as e:
                     logging.error("Error in renaming columns: " + str(e))
                     send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
-                    exit(1)
+                    return 1
 
         if len(task_info['src']) < 2:
             df_joined = globals()['df0']
@@ -162,7 +162,7 @@ def integrate(task_dict: dict):
             except Exception as e:
                 logging.error("Error in joining the two tables: " + str(e))
                 send_task_status(task_id, TASKSTATUS_FAILED, "Error in joining the two tables: " + str(e))
-                exit(1)
+                return 1
 
         try:
             columns_order = task_info['results']['column_order']
@@ -171,7 +171,7 @@ def integrate(task_dict: dict):
         except Exception as e:
             logging.error("Error in joining the two tables. Please check if duplicated columns exist: " + str(e))
             send_task_status(task_id, TASKSTATUS_FAILED, "Error in joining the two tables. Please check if duplicated columns exist: " + str(e))
-            exit(1)
+            return 1
 
         globals()['df0'] = df_joined # reuse globals()['df0'] if it's a pipeline task
 
@@ -182,7 +182,7 @@ def integrate(task_dict: dict):
     if df_joined.empty:
         logging.error("The joined table is empty.")
         send_task_status(task_id, TASKSTATUS_FAILED, "The joined table is empty.")
-        exit(1)
+        return 1
 
     df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
     if 'serve_as' in task_info['results']:
@@ -190,4 +190,4 @@ def integrate(task_dict: dict):
 
     logging.info("Job finished")
     send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")
-    exit()
+    return 0
