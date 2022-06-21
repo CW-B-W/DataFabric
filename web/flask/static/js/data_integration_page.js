@@ -38,7 +38,7 @@ function renderPage(tableInfos) {
             let newOpt = $(document.createElement('option'));
             newOpt.val('');
             timeColumnSelectElem.prepend(newOpt);
-            timeColumnSelectElem.val(0);
+            timeColumnSelectElem.val('');
             columnsSelectElem.append(newOpt.clone());
         }
 
