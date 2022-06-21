@@ -8,12 +8,8 @@ $(document).ready(function() {
         });
     }
 
-    if (tableInfos.length > 2) {
-        $('#NextTaskButton').show();
-    }
-    else {
-        $('#SendRequestButton').show();
-    }
+    $('#NextTaskButton').show();
+    $('#SendRequestButton').hide();
     renderPage(tableInfos.slice(0, 2));
 });
 
