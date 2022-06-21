@@ -217,6 +217,8 @@ function generateJoinSql(namemappingLeft, namemappingRight) {
     if (namemappingRight) {
         let selStats = [];
         let onStats  = [];
+        
+        let isCrossJoin = true;
         for (let i = 0; i < leftKeys.length; ++i) {
             let leftKey  = leftKeys[i];
             let rightKey = rightKeys[i];
@@ -227,6 +229,7 @@ function generateJoinSql(namemappingLeft, namemappingRight) {
                 newKey = leftKey;
                 selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
                 onStats.push(`df0.${leftKey}=df1.${rightKey}`);
+                isCrossJoin = false;
             }
             else if (leftKey != '' && rightKey == '') {
                 leftKey = namemappingLeft[leftKey];
@@ -246,7 +249,12 @@ function generateJoinSql(namemappingLeft, namemappingRight) {
         let selFullStat = selStats.join(', ');
         let onFullStat  = onStats.join(' AND ');
 
-        let sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
+        if (isCrossJoin) {
+            var sql = `SELECT ${selFullStat} FROM df0 CROSS JOIN df1;`;
+        }
+        else {
+            var sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
+        }
 
         return sql;
     }
