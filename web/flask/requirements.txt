@@ -9,7 +9,6 @@ pandasql==0.7.3
 
 SQLAlchemy==1.4.36
 PyMySQL==1.0.2
-pymysql-pooling==1.0.6
 pymongo==4.1.1
 cassandra-driver==3.25.0
 cx-Oracle==8.3.0
@@ -21,3 +20,5 @@ happybase==1.2.0
 phoenixdb==1.1.0
 pymssql==2.2.2
 xlrd==1.2.0
+
+pymysql-pooling==1.0.6
