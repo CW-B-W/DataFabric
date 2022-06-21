@@ -150,8 +150,9 @@ function createTaskInfo()
 function createJoinSubtask(tableInfos)
 {
     let srcInfos = []
+    let resultNameMapping = mapNames([getColumnsInvolved(0, false), getColumnsInvolved(1, false)]);
     for (let i = 0; i < 2; ++i) {
-        let srcInfo = getJoinSrcInfo(tableInfos, i);
+        let srcInfo = getJoinSrcInfo(tableInfos, i, resultNameMapping[i]);
         if (srcInfo)
             srcInfos.push(srcInfo);
     }
@@ -176,11 +177,36 @@ function createJoinSubtask(tableInfos)
     return subtask;
 }
 
-function getJoinSrcInfo(tableInfos, srcIdx) {
+function mapNames(list) {
+    let mappedList = [];
+    let globalMappedNames = [];
+
+    for (let l = 0; l < 2; ++l) {
+        mappedList.push({});
+        let columns = list[l];
+        for (let i in columns) {
+            if (list[l][i] == '')
+                continue;
+            let oriName    = columns[i];
+            let mappedName = toFormattedKey(oriName);
+            if (!(list[0][i] != '' && list[1][i] != '')) { // avoid the pairs of "JOIN ... ON" statement
+                let renameIdx  = 1; 
+                while (globalMappedNames.includes(mappedName)) {
+                    mappedName = toFormattedKey(`${columns[i]}_${renameIdx++}`);
+                }
+            }
+            globalMappedNames.push(mappedName);
+            mappedList[l][oriName] = mappedName;
+        }
+    }
+    return mappedList;
+}
+
+function getJoinSrcInfo(tableInfos, srcIdx, resultNameMapping) {
     if (tableInfos[srcIdx]['DBMS'].toLowerCase() == 'none')
         return null;
 
-    let columnsInvolved = getColumnsInvolved(srcIdx);
+    let columnsInvolved = getColumnsInvolved(srcIdx, true);
     return generateSrcInfo(
         tableInfos[srcIdx]['Connection'].split(':')[0],
         tableInfos[srcIdx]['Connection'].split(':')[1],
@@ -190,29 +216,27 @@ function getJoinSrcInfo(tableInfos, srcIdx) {
         tableInfos[srcIdx]['DB'],
         tableInfos[srcIdx]['TableName'],
         columnsInvolved,
-        Object.fromEntries(columnsInvolved.map(x => [x, toFormattedKey(x)])),
+        Object.fromEntries(Object.entries(resultNameMapping).filter(([key, value]) => columnsInvolved.includes(key))),
         $(`#TimeStartInput${srcIdx}`).val(),
         $(`#TimeEndInput${srcIdx}`).val(),
         $(`#TimeColumnSelect${srcIdx}`).val()
     );
 }
 
-function getColumnsInvolved(srcIdx) {
-    let involved = new Set()
+function getColumnsInvolved(srcIdx, rmEmpty) {
+    let involved = [];
     $('#JoinTable >tbody').children().each(function(idx) {
-        involved.add($(this).find('td').eq(srcIdx).text());
+        involved.push($(this).find('td').eq(srcIdx).text());
     });
-    involved.delete('');
-    return Array.from(involved);
+    if (rmEmpty)
+        return involved.filter(x => x != '');
+    else
+        return involved;
 }
 
 function generateJoinSql(namemappingLeft, namemappingRight) {
-    let leftKeys  = [];
-    let rightKeys = [];
-    $('#JoinTable >tbody').children().each(function(idx) {
-        leftKeys.push($(this).find('td').eq(0).text());
-        rightKeys.push($(this).find('td').eq(1).text());
-    });
+    let leftKeys  = getColumnsInvolved(0, false);
+    let rightKeys = getColumnsInvolved(1, false);
 
     if (namemappingRight) {
         let selStats = [];
@@ -276,12 +300,8 @@ function generateJoinSql(namemappingLeft, namemappingRight) {
 }
 
 function generateResultKeys(namemappingLeft, namemappingRight) {
-    let leftKeys  = [];
-    let rightKeys = [];
-    $('#JoinTable >tbody').children().each(function(idx) {
-        leftKeys.push($(this).find('td').eq(0).text());
-        rightKeys.push($(this).find('td').eq(1).text());
-    });
+    let leftKeys  = getColumnsInvolved(0, false);
+    let rightKeys = getColumnsInvolved(1, false);
 
     let resultKeys = [];
     if (namemappingRight) {
