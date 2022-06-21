@@ -103,5 +103,5 @@ def none_table_info():
         'DBMS' : 'None',
         'DB' : 'None',
         'TableName' : 'None',
-        'Columns' : 'None'
+        'Columns' : ''
     }
