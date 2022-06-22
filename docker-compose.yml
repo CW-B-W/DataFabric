@@ -57,7 +57,7 @@ services:
         ipv4_address: 172.22.0.4
     volumes:
       - ./persistent_storage/mysql/mysql-data:/var/lib/mysql
-      - ./mysql/conf:/etc/mysql/conf.d
+      - ./conf/mysql/conf:/etc/mysql/conf.d
     mem_limit: 4096MB
 
   mongo:
@@ -102,7 +102,7 @@ services:
       datafabric_network:
         ipv4_address: 172.22.0.7
     volumes:
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
     mem_limit: 1024MB
 
