@@ -28,7 +28,6 @@ def preview_table(
 ) -> list:
     """Request arbitrary records from DBMS for previewing.
     This is the abstract function for calling functions of desired DBMS.
-
     Args:
         username (str): Username of DBMS
         password (str): Password of DBMS
@@ -38,7 +37,6 @@ def preview_table(
         db (str): Desired DB in DBMS
         table (str): Desired Table in DB
         limit (int, optional): Number of rows to return. Defaults to 5.
-
     Returns:
         list: List containing rows of requested data.
     """
@@ -67,7 +65,6 @@ def query_table(
         start_time: str = None, end_time: str = None, time_column: str = None
 ) -> DataFrame:
     """Query data from DBMS. Return pandas.DataFrame
-
     Args:
         username (str): Username of DBMS
         password (str): Password of DBMS
@@ -79,7 +76,6 @@ def query_table(
         start_time (str, optional): Query start time. Defaults to None.
         end_time (str, optional): Query end time. Defaults to None.
         time_column (str, optional): The column of start_time, end_time. Defaults to None.
-
     Returns:
         DataFrame: pandas.DataFrame containing requested data
     """
@@ -94,14 +90,12 @@ def list_dbs(username: str, password: str,
 ) -> list:
     """Query what databases are in the DBMS.
     This is the abstract function for calling functions of desired DBMS.
-
     Args:
         username (str): Username of DBMS
         password (str): Password of DBMS
         ip (str): IP/Hostname of DBMS
         port (str): Port of DBMS. Note that for Oracle it can be like '1521/sid'
         dbms (str): Name of DBMS, e.g. 'MySQL', will be converted to lowercase
-
     Returns:
         list: List containing database names
     """
@@ -117,7 +111,6 @@ def list_tables(username: str, password: str,
 ) -> list:
     """Query what tables are in the DB.
     This is the abstract function for calling functions of desired DBMS.
-
     Args:
         username (str): Username of DBMS
         password (str): Password of DBMS
@@ -125,7 +118,6 @@ def list_tables(username: str, password: str,
         port (str): Port of DBMS. Note that for Oracle it can be like '1521/sid'
         dbms (str): Name of DBMS, e.g. 'MySQL', will be converted to lowercase
         db (str): Desired DB in DBMS
-
     Returns:
         list: List containing column names
     """
@@ -141,7 +133,6 @@ def list_columns(username: str, password: str,
 ) -> list:
     """Query what columns(keys) are in the table.
     This is the abstract function for calling functions of desired DBMS.
-
     Args:
         username (str): Username of DBMS
         password (str): Password of DBMS
@@ -150,7 +141,6 @@ def list_columns(username: str, password: str,
         dbms (str): Name of DBMS, e.g. 'MySQL', will be converted to lowercase
         db (str): Desired DB in DBMS
         table (str): Desired Table in DB
-
     Returns:
         list: List containing column names
     """

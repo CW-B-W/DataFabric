@@ -9,7 +9,7 @@ def preview_table_hbase(username, password, ip, port, db, table, limit):
     columns = list_columns_hbase(username, password, ip, port, db, table)
     b_columns = [str.encode(s) for s in columns]
 
-    my_generator = ((tuple([d[col].decode('utf-8') for col in b_columns])) for k, d in data)
+    my_generator = ((tuple(["" if d.get(col) is None else d[col].decode('utf-8') for col in b_columns])) for k, d in data)
     my_list = list(my_generator)
     my_data = pd.DataFrame(my_list, columns=columns)
     result = my_data.to_dict('records')
