@@ -75,7 +75,10 @@ def integrate(task_dict: dict):
     except Exception as e:
         print(str(e), file=sys.stderr)
         send_task_status(str(-1), TASKSTATUS_UNKNOWN, str(e))
-        exit(1)
+        return 1
+
+    with open(f'/task_requests/{task_id}.json', 'w') as wf:
+        json.dump(task_dict, wf)
 
     ts = str(datetime.now().timestamp())
     setup_logging('joined_' + task_id + '_' + ts + '.log')
@@ -103,11 +106,15 @@ def integrate(task_dict: dict):
             if 'end_time' not in d:
                 d['end_time']   = '2099-12-31 23:55'
             if 'time_column' not in d:
-                start_time = None
-                end_time   = None
-                time_col   = None
+                d['start_time']  = None
+                d['end_time']    = None
+                d['time_column'] = None
+            
+            start_time = d['start_time']
+            end_time   = d['end_time']
+            time_col   = d['time_column']
 
-            if dbms != 'dataframe':
+            if dbms != 'dataframe' and dbms != 'none':
                 try:
                     queried_df = DBMSAccessor.query_table(
                         username, password,
@@ -121,28 +128,28 @@ def integrate(task_dict: dict):
                 except Exception as e:
                     logging.error(f"Failed to retrieve data from {dbms}" + str(e))
                     send_task_status(task_id, TASKSTATUS_FAILED, f"Failed to retrieve data from {dbms}" + str(e))
-                    exit(1)
-            logging.info(f'Finished retrieving table {i} from {dbms}')
-            
-            # make all column names uppercase
-            try:
-                if 'namemapping' in d:
-                    namemapping = d['namemapping']
-                    # make mapping key uppercase
-                    namemapping =  {k.upper(): v for k, v in namemapping.items()}
-                    # make original columns uppercase
-                    globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
-                    globals()[f'df{i}'].rename(columns=namemapping, inplace=True)
-                else:
-                    globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
-                logging.debug(str(globals()[f'df{i}']))
-            except Exception as e:
-                logging.error("Error in renaming columns: " + str(e))
-                send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
-                exit(1)
+                    return 1
+                logging.info(f'Finished retrieving table {i} from {dbms}')
+                
+                # make all column names uppercase
+                try:
+                    if 'namemapping' in d:
+                        namemapping = d['namemapping']
+                        # make mapping key uppercase
+                        namemapping =  {k.upper(): v for k, v in namemapping.items()}
+                        # make original columns uppercase
+                        globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
+                        globals()[f'df{i}'].rename(columns=namemapping, inplace=True)
+                    else:
+                        globals()[f'df{i}'].columns = map(str.upper, globals()[f'df{i}'].columns)
+                    logging.debug(str(globals()[f'df{i}']))
+                except Exception as e:
+                    logging.error("Error in renaming columns: " + str(e))
+                    send_task_status(task_id, TASKSTATUS_FAILED, "Error in renaming columns: " + str(e))
+                    return 1
 
         if len(task_info['src']) < 2:
-            df_joined = df0
+            df_joined = globals()['df0']
         else:
             # use pandasql to join tables
             try:
@@ -155,7 +162,7 @@ def integrate(task_dict: dict):
             except Exception as e:
                 logging.error("Error in joining the two tables: " + str(e))
                 send_task_status(task_id, TASKSTATUS_FAILED, "Error in joining the two tables: " + str(e))
-                exit(1)
+                return 1
 
         try:
             columns_order = task_info['results']['column_order']
@@ -164,9 +171,9 @@ def integrate(task_dict: dict):
         except Exception as e:
             logging.error("Error in joining the two tables. Please check if duplicated columns exist: " + str(e))
             send_task_status(task_id, TASKSTATUS_FAILED, "Error in joining the two tables. Please check if duplicated columns exist: " + str(e))
-            exit(1)
+            return 1
 
-        df0 = df_joined # reuse df0 if it's a pipeline task
+        globals()['df0'] = df_joined # reuse globals()['df0'] if it's a pipeline task
 
 
 
@@ -175,10 +182,12 @@ def integrate(task_dict: dict):
     if df_joined.empty:
         logging.error("The joined table is empty.")
         send_task_status(task_id, TASKSTATUS_FAILED, "The joined table is empty.")
-        exit(1)
+        return 1
 
     df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
+    if 'serve_as' in task_info['results']:
+        df_joined.to_csv(f"/data_serving/{task_info['results']['serve_as']}", index=False, header=True)
 
-    logging.error("Job finished")
+    logging.info("Job finished")
     send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")
-    exit()
+    return 0

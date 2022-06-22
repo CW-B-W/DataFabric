@@ -37,13 +37,13 @@ function queryRecommendations() {
         "type": "GET",
         "dataType": "json",
         "contentType": "application/json",
-        "url": `/recommend`,
+        "url": `/recommender/recommend`,
         "timeout": 1000,
         success: function(result) {
             showRecommendResults(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            console.warn("[querySearchHints] Connection Failed!");
+            console.warn("Connection Failed!");
         }
     });
 }
@@ -57,7 +57,7 @@ function showRecommendResults(results) {
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
         clon.find("[name=CatalogName]").eq(0).text(`${item['CatalogName']} (score: ${ratings[i]})`);
-        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog_page?catalog_id=${item['ID']}`)
+        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog?catalog_id=${item['ID']}`)
         genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), item['TableMembers'], item['TableIds']);
         clon.find("[name=Description]").eq(0).text(item['Description']);
         $("#SearchResults").append(clon);
@@ -76,7 +76,7 @@ function querySearchHints(text) {
             showSearchHints(result);
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            console.warn("[querySearchHints] Connection Failed!");
+            console.warn("Connection Failed!");
         }
     });
 }
@@ -117,7 +117,7 @@ function showSearchResults(results) {
         var temp = document.getElementById("ResultItemTemplate");
         var clon = $(temp.content.cloneNode(true));
         clon.find("[name=CatalogName]").eq(0).text(result['CatalogName']);
-        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog_page?catalog_id=${result['ID']}`)
+        clon.find("[name=CatalogName]").eq(0).attr('href', `/catalog?catalog_id=${result['ID']}`)
         genTablePreviewHref(clon.find("[name=TableMembers]").eq(0), result['TableMembers'], result['TableIds']);
         clon.find("[name=Description]").eq(0).text(result['Description']);
         $("#SearchResults").append(clon);
@@ -212,15 +212,14 @@ function setTableContent(table, tableContent) {
 function logout() {
     $.ajax({
         "type": "GET",
-        "dataType": "json",
-        "contentType": "application/json",
+        "contentType": "text/html",
         "url": `/logout`,
         "timeout": 60000,
         success: function(result) {
             location.href = '/';
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            location.href = '/';
+            
         }
     });
 }

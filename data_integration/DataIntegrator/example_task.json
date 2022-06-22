@@ -38,7 +38,8 @@
                     "ID",
                     "COLUMN591",
                     "COLUMN590"
-                ]
+                ],
+                "serve_as":"myjoin_590_591"
             }
         }
     ]

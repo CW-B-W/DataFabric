@@ -1,3 +1,5 @@
+subTaskInfos = [];
+
 $(document).ready(function() {
     for (let i = 0; i < 2; ++i) {
         $(`#ColumnsSelect${i}`).dblclick(function() {
@@ -5,7 +7,49 @@ $(document).ready(function() {
             addJoinPairs(columnsSelected);            
         });
     }
+
+    $('#NextTaskButton').show();
+    $('#SendRequestButton').hide();
+    renderPage(tableInfos.slice(0, 2));
 });
+
+function renderPage(tableInfos) {
+    let len = Math.min(2, tableInfos.length);
+    for (let i = 0; i < len; ++i) {
+        $(`#DBMSText${i}`).text(tableInfos[i]['DBMS']);
+        $(`#ServerText${i}`).val(tableInfos[i]['Connection']);
+        $(`#UsernameText${i}`).val(tableInfos[i]['Username']);
+        $(`#PasswordText${i}`).val(tableInfos[i]['Password']);
+        $(`#TableText${i}`).val(tableInfos[i]['TableName']);
+        
+        let timeColumnSelectElem = $(`#TimeColumnSelect${i}`);
+        let columnsSelectElem    = $(`#ColumnsSelect${i}`);
+        timeColumnSelectElem.empty();
+        columnsSelectElem.empty();
+        let columns = tableInfos[i]['Columns'].split(',');
+        for (let c in columns) {
+            let col = columns[c];
+            let newOpt = $(document.createElement('option'));
+            newOpt.text(col);
+            timeColumnSelectElem.append(newOpt);
+            columnsSelectElem.append(newOpt.clone());
+        }
+        {
+            let newOpt = $(document.createElement('option'));
+            newOpt.val('');
+            timeColumnSelectElem.prepend(newOpt);
+            timeColumnSelectElem.val('');
+            columnsSelectElem.append(newOpt.clone());
+        }
+
+        $(`#TimeStartInput${i}`).text('');
+        $(`#TimeStartInput${i}`).val('');
+        $(`#TimeEndInput${i}`).text('');
+        $(`#TimeEndInput${i}`).val('');
+    }
+    while (popJoinTable())
+        ;
+}
 
 function addJoinPairs(columnsSelected)
 {
@@ -54,6 +98,24 @@ function popJoinTable()
     return true;
 }
 
+function nextTask()
+{
+    // merge two tasks into one task
+    let joinedSubtask = createJoinSubtask(tableInfos.slice(0, 2));
+    subTaskInfos.push(joinedSubtask);
+    let joinedTableInfo = createJoinTableInfo(joinedSubtask);
+    tableInfos.shift();
+    tableInfos.shift();
+    tableInfos.unshift(joinedTableInfo);
+
+    if (tableInfos.length == 1) {
+        $('#NextTaskButton').hide();
+        $('#SendRequestButton').show();
+    }
+    else {
+        renderPage(tableInfos.slice(0, 2));
+    }
+}
 
 function sendTaskRequest()
 {
@@ -61,15 +123,15 @@ function sendTaskRequest()
 
     $.ajax({
         "type": "POST",
-        "dataType": "json",
+        "dataType": "text",
         "contentType": "application/json",
         "url": "/data_integration",
         "data": JSON.stringify(taskInfo),
         success: function(result) {
-            
+            // location.href = `/data_integration/status?task_id=${result}`
         },
         error: function(jqXHR, JQueryXHR, textStatus) {
-            
+            alert('failed');
         }
     });
 
@@ -80,29 +142,71 @@ function createTaskInfo()
 {
     let taskInfo = {
         'task_id'   : _uuid(),
-        'task_list' : [createJoinSubtask()]
+        'task_list' : subTaskInfos
     }
     return taskInfo;
 }
 
-function createJoinSubtask()
+function createJoinSubtask(tableInfos)
 {
     let srcInfos = []
+    let resultNameMapping = mapNames([getColumnsInvolved(0, false), getColumnsInvolved(1, false)]);
     for (let i = 0; i < 2; ++i) {
-        srcInfos.push(getJoinSrcInfo(i));
+        let srcInfo = getJoinSrcInfo(tableInfos, i, resultNameMapping[i]);
+        if (srcInfo)
+            srcInfos.push(srcInfo);
+    }
+    if (srcInfos.length == 1) {
+        var joinSql     = generateJoinSql(srcInfos[0]['namemapping'], null);
+        var columnOrder = generateResultKeys(srcInfos[0]['namemapping'], null);
+    }
+    else {
+        var joinSql     = generateJoinSql(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']);
+        var columnOrder = generateResultKeys(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']);
     }
     let subtask = {
         'src'      : srcInfos,
-        'join_sql' : generateJoinSql(srcInfos[0]['namemapping'], srcInfos[1]['namemapping']),
+        'join_sql' : joinSql,
         'results'  : {
-            'column_order' : generateResultKeys(srcInfos[0]['namemapping'], srcInfos[1]['namemapping'])
+            'column_order' : columnOrder,
+            'serve_as' : $('#ServeAsName').val()
         }
     }
+    if (subtask['results']['serve_as'] == '')
+        delete subtask['results']['serve_as'];
     return subtask;
 }
 
-function getJoinSrcInfo(srcIdx) {
-    let columnsInvolved = getColumnsInvolved(srcIdx);
+function mapNames(list) {
+    let mappedList = [];
+    let globalMappedNames = [];
+
+    for (let l = 0; l < 2; ++l) {
+        mappedList.push({});
+        let columns = list[l];
+        for (let i in columns) {
+            if (list[l][i] == '')
+                continue;
+            let oriName    = columns[i];
+            let mappedName = toFormattedKey(oriName);
+            if (!(list[0][i] != '' && list[1][i] != '')) { // avoid the pairs of "JOIN ... ON" statement
+                let renameIdx  = 1; 
+                while (globalMappedNames.includes(mappedName)) {
+                    mappedName = toFormattedKey(`${columns[i]}_${renameIdx++}`);
+                }
+            }
+            globalMappedNames.push(mappedName);
+            mappedList[l][oriName] = mappedName;
+        }
+    }
+    return mappedList;
+}
+
+function getJoinSrcInfo(tableInfos, srcIdx, resultNameMapping) {
+    if (tableInfos[srcIdx]['DBMS'].toLowerCase() == 'none')
+        return null;
+
+    let columnsInvolved = getColumnsInvolved(srcIdx, true);
     return generateSrcInfo(
         tableInfos[srcIdx]['Connection'].split(':')[0],
         tableInfos[srcIdx]['Connection'].split(':')[1],
@@ -112,99 +216,126 @@ function getJoinSrcInfo(srcIdx) {
         tableInfos[srcIdx]['DB'],
         tableInfos[srcIdx]['TableName'],
         columnsInvolved,
-        Object.fromEntries(columnsInvolved.map(x => [x, toFormattedKey(x)])),
+        Object.fromEntries(Object.entries(resultNameMapping).filter(([key, value]) => columnsInvolved.includes(key))),
         $(`#TimeStartInput${srcIdx}`).val(),
         $(`#TimeEndInput${srcIdx}`).val(),
         $(`#TimeColumnSelect${srcIdx}`).val()
     );
 }
 
-function getColumnsInvolved(srcIdx) {
-    let involved = new Set()
+function getColumnsInvolved(srcIdx, rmEmpty) {
+    let involved = [];
     $('#JoinTable >tbody').children().each(function(idx) {
-        involved.add($(this).find('td').eq(srcIdx).text());
+        involved.push($(this).find('td').eq(srcIdx).text());
     });
-    involved.delete('');
-    return Array.from(involved);
+    if (rmEmpty)
+        return involved.filter(x => x != '');
+    else
+        return involved;
 }
 
 function generateJoinSql(namemappingLeft, namemappingRight) {
-    let leftKeys  = [];
-    let rightKeys = [];
-    $('#JoinTable >tbody').children().each(function(idx) {
-        leftKeys.push($(this).find('td').eq(0).text());
-        rightKeys.push($(this).find('td').eq(1).text());
-    });
+    let leftKeys  = getColumnsInvolved(0, false);
+    let rightKeys = getColumnsInvolved(1, false);
 
-    let selStats = [];
-    let onStats  = [];
-    for (let i = 0; i < leftKeys.length; ++i) {
-        let leftKey  = leftKeys[i];
-        let rightKey = rightKeys[i];
-        let newKey   = '';
-        if (leftKey != '' && rightKey != '') {
-            leftKey  = namemappingLeft[leftKey];
-            rightKey = namemappingRight[rightKey];
-            newKey = leftKey;
-            selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
-            onStats.push(`df0.${leftKey}=df1.${rightKey}`);
+    if (namemappingRight) {
+        let selStats = [];
+        let onStats  = [];
+        
+        let isCrossJoin = true;
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey  = leftKeys[i];
+            let rightKey = rightKeys[i];
+            let newKey   = '';
+            if (leftKey != '' && rightKey != '') {
+                leftKey  = namemappingLeft[leftKey];
+                rightKey = namemappingRight[rightKey];
+                newKey = leftKey;
+                selStats.push(`COALESCE(df0.${leftKey}, df1.${rightKey}) as ${newKey}`);
+                onStats.push(`df0.${leftKey}=df1.${rightKey}`);
+                isCrossJoin = false;
+            }
+            else if (leftKey != '' && rightKey == '') {
+                leftKey = namemappingLeft[leftKey];
+                newKey = leftKey;
+                selStats.push(`df0.${leftKey} as ${newKey}`);
+            }
+            else if (leftKey == '' && rightKey != '') {
+                rightKey = namemappingRight[rightKey];
+                newKey = rightKey;
+                selStats.push(`df1.${rightKey} as ${newKey}`);
+            }
+            else {
+                // DO NOTHING for this case
+            }
         }
-        else if (leftKey != '' && rightKey == '') {
-            leftKey = namemappingLeft[leftKey];
-            newKey = leftKey;
-            selStats.push(`df0.${leftKey} as ${newKey}`);
-        }
-        else if (leftKey == '' && rightKey != '') {
-            rightKey = namemappingRight[rightKey];
-            newKey = rightKey;
-            selStats.push(`df1.${rightKey} as ${newKey}`);
+
+        let selFullStat = selStats.join(', ');
+        let onFullStat  = onStats.join(' AND ');
+
+        if (isCrossJoin) {
+            var sql = `SELECT ${selFullStat} FROM df0 CROSS JOIN df1;`;
         }
         else {
-            // DO NOTHING for this case
+            var sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
         }
+
+        return sql;
     }
+    else {
+        // Only exporting table
+        let selStats = [];
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey = namemappingLeft[leftKeys[i]];
+            let newKey  = leftKey;
+            selStats.push(`df0.${leftKey} as ${newKey}`);
+        }
 
-    let selFullStat = selStats.join(',');
-    let onFullStat  = onStats.join(' AND ');
+        let selFullStat = selStats.join(', ');
 
-    let sql = `SELECT ${selFullStat} FROM df0 LEFT JOIN df1 ON ${onFullStat};`;
+        let sql = `SELECT ${selFullStat} FROM df0;`;
 
-    return sql;
+        return sql;
+    }
 }
 
 function generateResultKeys(namemappingLeft, namemappingRight) {
-    let leftKeys  = [];
-    let rightKeys = [];
-    $('#JoinTable >tbody').children().each(function(idx) {
-        leftKeys.push($(this).find('td').eq(0).text());
-        rightKeys.push($(this).find('td').eq(1).text());
-    });
+    let leftKeys  = getColumnsInvolved(0, false);
+    let rightKeys = getColumnsInvolved(1, false);
 
     let resultKeys = [];
-    let keySet = new Set();
-    for (let i = 0; i < leftKeys.length; ++i) {
-        let leftKey  = leftKeys[i];
-        let rightKey = rightKeys[i];
-        let resultKey = '';
-        if (leftKey != '' && rightKey != '') {
-            leftKey  = namemappingLeft[leftKey];
-            rightKey = namemappingRight[rightKey];
-            resultKey = leftKey;
-        }
-        else if (leftKey != '' && rightKey == '') {
-            leftKey = namemappingLeft[leftKey];
-            resultKey = leftKey;
-        }
-        else if (leftKey == '' && rightKey != '') {
-            rightKey = namemappingRight[rightKey];
-            resultKey = rightKey;
-        }
-        else {
-            // DO NOTHING for this case
-        }
+    if (namemappingRight) {
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey  = leftKeys[i];
+            let rightKey = rightKeys[i];
+            let resultKey = '';
+            if (leftKey != '' && rightKey != '') {
+                leftKey  = namemappingLeft[leftKey];
+                rightKey = namemappingRight[rightKey];
+                resultKey = leftKey;
+            }
+            else if (leftKey != '' && rightKey == '') {
+                leftKey = namemappingLeft[leftKey];
+                resultKey = leftKey;
+            }
+            else if (leftKey == '' && rightKey != '') {
+                rightKey = namemappingRight[rightKey];
+                resultKey = rightKey;
+            }
+            else {
+                // DO NOTHING for this case
+            }
 
-        resultKey = resultKey;
-        resultKeys.push(resultKey);
+            resultKeys.push(resultKey);
+        }
+    }
+    else {
+        // Only exporting table
+        for (let i = 0; i < leftKeys.length; ++i) {
+            let leftKey   = namemappingLeft[leftKeys[i]];
+            let resultKey = leftKey;
+            resultKeys.push(resultKey);
+        }
     }
     
     return resultKeys;
@@ -231,4 +362,19 @@ function _uuid() {
 function toFormattedKey(key)
 {
     return key.replace(/[:.]/g, "_").replace(/[@]/g, "").toUpperCase();
+}
+
+function createJoinTableInfo(joinedSubtask)
+{
+    let joinedTableInfo = {
+        'ID' : -1,
+        'Connection' : '',
+        'Username' : '',
+        'Password' : '',
+        'DBMS' : 'Dataframe',
+        'DB' : '',
+        'TableName' : '',
+        'Columns' : joinedSubtask['results']['column_order'].join(',')
+    }
+    return joinedTableInfo;
 }

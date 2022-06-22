@@ -37,8 +37,10 @@ RUN pip3 install setuptools wheel
 ADD requirements.txt /requirements.txt
 RUN pip3 install -r requirements.txt
 
-ADD entrypoint-flask.sh /entrypoint-flask.sh
-RUN chmod a+x /entrypoint-flask.sh
+# Install patched PyMySQLPool==1.0.6
+RUN wget https://raw.githubusercontent.com/prprprus/PyMySQLPool/212110afaaa01f1d0d3faa8fe099ad19f48a8fbe/pymysqlpool/pool.py -O /tmp/pool.py \
+    && mv /tmp/pool.py /usr/local/lib/python3.7/dist-packages/pymysqlpool
+
 ADD run.sh /run.sh
 RUN chmod a+x /run.sh
 CMD ["/run.sh"]

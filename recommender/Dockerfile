@@ -21,10 +21,8 @@ ADD requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
 
 ADD run.sh ${HOME}/run.sh
-ADD run_flask.sh ${HOME}/run_flask.sh
 USER root
 RUN chmod a+x ${HOME}/run.sh
-RUN chmod a+x ${HOME}/run_flask.sh
 USER ${NB_UID}
 WORKDIR "${HOME}"
 ENTRYPOINT ["tini", "-g", "--"]

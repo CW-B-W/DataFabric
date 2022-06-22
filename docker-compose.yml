@@ -15,8 +15,6 @@ services:
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.2
-    env_file:
-      - ./web/flask/flask.env
     ports:
       - 5000:5000
     volumes:
@@ -32,6 +30,7 @@ services:
       - ./web/flask/DatafabricManager:/DatafabricManager
       - ./web/flask/RecommenderService:/RecommenderService
       - ./web/flask/DataIntegrationService:/DataIntegrationService
+      - ./web/flask/DatafabricTools:/DatafabricTools
       - ./test:/test
     mem_limit: 4096MB
   
@@ -58,7 +57,7 @@ services:
         ipv4_address: 172.22.0.4
     volumes:
       - ./persistent_storage/mysql/mysql-data:/var/lib/mysql
-      - ./mysql/conf:/etc/mysql/conf.d
+      - ./conf/mysql/conf:/etc/mysql/conf.d
     mem_limit: 4096MB
 
   mongo:
@@ -103,7 +102,7 @@ services:
       datafabric_network:
         ipv4_address: 172.22.0.7
     volumes:
-      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
     mem_limit: 1024MB
 
@@ -117,8 +116,10 @@ services:
     volumes:
       - ./data_integration/microservice.py:/microservice.py
       - ./data_integration/microservice.log:/microservice.log
+      - ./data_integration/task_requests:/task_requests
       - ./data_integration/task_logs:/task_logs
       - ./data_integration/integration_results:/integration_results
+      - ./data_integration/data_serving:/data_serving
       - ./data_integration/DataIntegrator:/DataIntegrator
       - ./common/DBMSAccessor:/DBMSAccessor
     networks:

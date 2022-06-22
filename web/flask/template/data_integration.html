@@ -34,22 +34,26 @@
     {% for elem_id in range(2) %}
     <div class="col">
       <form>
-        <label>Database</label>
+        <label>DBMS</label>
         <select disabled class="form-select w-100">
-          <option>{{tableInfos[elem_id]['DBMS']}}</option>
+          <option id="DBMSText{{elem_id}}">{{tableInfos[elem_id]['DBMS']}}</option>
         </select>
         <br><br>
         <div class="form-group">
           <label>Server</label>
-          <input disabled type="text" class="form-control" value="{{tableInfos[elem_id]['Connection']}}">
+          <input disabled type="text" class="form-control" value="{{tableInfos[elem_id]['Connection']}}" id="ServerText{{elem_id}}">
         </div>
         <div class="form-group">
           <label>Username</label>
-          <input disabled type="email" class="form-control" value="{{tableInfos[elem_id]['Username']}}">
+          <input disabled type="email" class="form-control" value="{{tableInfos[elem_id]['Username']}}" id="UsernameText{{elem_id}}">
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input disabled type="password" class="form-control" value="{{tableInfos[elem_id]['Password']}}">
+          <input disabled type="password" class="form-control" value="{{tableInfos[elem_id]['Password']}}" id="PasswordText{{elem_id}}">
+        </div>
+        <div class="form-group">
+          <label>Table</label>
+          <input disabled type="text" class="form-control" value="{{tableInfos[elem_id]['TableName']}}" id="TableText{{elem_id}}">
         </div>
       </form>
 
@@ -128,8 +132,13 @@
   <hr>
   <br>
 
+  <label>Serve as</label>
+  <textarea class="form-control" id="ServeAsName" rows="3"></textarea>
+  <br>
+
   <div class="row">
-    <button onclick="sendTaskRequest()" class="btn btn-success w-100">Send Request</button>
+    <button onclick="nextTask()" style="display: none" class="btn btn-success w-100" id="NextTaskButton">Next</button>
+    <button onclick="sendTaskRequest()" style="display: none" class="btn btn-success w-100" id="SendRequestButton">Send Request</button>
   </div>
   <br>
   <div class="row">

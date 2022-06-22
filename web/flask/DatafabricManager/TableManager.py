@@ -3,6 +3,23 @@ from InternalDB.MySQLDB import MySQLDB
 
 mysqldb = MySQLDB('datafabric')
 
+def search(search_text: str, start_page: int, n_items: int=50) -> list:
+    """Search tables with names in datafabric.TableInfo
+
+    Args:
+        search_text (str): search table name
+        start_page (int): start_page (start from 0). each page has 10 items
+        n_items (int, optional): number of items to return. Defaults to 50.
+
+    Returns:
+        list: list of search result, elements are the catalogs
+    """
+    result = mysqldb.query(
+        f"SELECT * FROM TableInfo "
+        f"WHERE LOWER(TableName) LIKE '%{search_text.lower()}%' LIMIT {start_page*10},{n_items};"
+    )
+    return result
+
 def get_table_info(table_id: int) -> dict:
     """Get the table info with table_id
 
@@ -69,8 +86,22 @@ def add_table_info(connection: str, dbms: str, db: str, table_name: str, columns
             "{columns}"
         );
     """)
+    inserted_id = mysqldb.query(f"""
+        SELECT ID FROM TableInfo ORDER BY ID DESC LIMIT 1
+    """)[0]['ID']
+    return inserted_id
 
 def del_table_info(table_id: int):
     mysqldb.query(f"""
         DELETE FROM TableInfo WHERE ID = {table_id};
     """)
+
+def none_table_info():
+    return {
+        'ID': -1,
+        'Connection' : 'None',
+        'DBMS' : 'None',
+        'DB' : 'None',
+        'TableName' : 'None',
+        'Columns' : ''
+    }

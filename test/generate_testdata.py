@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/')
 import random
 import pymysql
 import pymongo
@@ -236,18 +238,26 @@ def generate_users(n_user):
         'username' : f'admin',
         'password' : f'admin',
         'db_account' : {
-            'mysql' : {
-                'datafabric-mysql:3306' : {
-                    'ip'       : 'datafabric-mysql',
-                    'port'     : '3306',
-                    'username' : 'root',
-                    'password' : 'my-secret-pw'
+            'mysql': {
+                'datafabric-mysql:3306': {
+                    'ip': 'datafabric-mysql',
+                    'port': '3306',
+                    'username': 'root',
+                    'password': 'my-secret-pw'
                 },
                 '192.168.103.52:3306' : {
                     'ip'       : '192.168.103.52',
                     'port'     : '3306',
                     'username' : f'brad',
                     'password' : f'00000000'
+                }
+            },
+            'mongodb' : {
+                'datafabric-mongo:27017': {
+                    'ip': 'datafabric-mongo',
+                    'port': '27017',
+                    'username': 'root',
+                    'password': 'example'
                 }
             }
         },

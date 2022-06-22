@@ -2,16 +2,13 @@
 
 import json
 import sys, os, time
-import random
 import json
 
 ''' ================ Flask Init ================ '''
-import flask
 from flask import Flask, request, render_template, redirect, url_for
 from flask import render_template
 from flask import session
 from flask_cors import CORS
-#You need to use following line [app Flask(__name__)]
 app = Flask(__name__, template_folder='template')
 class Config(object):
     SECRET_KEY = "cwbw"
@@ -103,3 +100,7 @@ def train():
         return "Failed to write to MongoDB. " + str(e), 500
     
     return 'ok'
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
