@@ -40,13 +40,25 @@ def preview_table(
         limit (int, optional): Number of rows to return. Defaults to 5.
 
     Returns:
-        list: List containing rows of requested data
+        list: List containing rows of requested data.
     """
     dbms = dbms.lower()
     # Use reflection to call function (Better extensibility for adding new DBMS)
     # The target function name should be like such as 'preview_table_mysql(...)'
-    func = get_module_func(f'{dbms}Accessor', f'preview_table_{dbms}')
-    return func(username, password, ip, port, db, table, limit)
+    func     = get_module_func(f'{dbms}Accessor', f'preview_table_{dbms}')
+    results  = func(username, password, ip, port, db, table, limit)
+
+    # make sure each dict has all keys
+    key_list = []
+    for row in results:
+        for key in row:
+            if key not in key_list:
+                key_list.append(key)
+    for row in results:
+        for expected_key in key_list:
+            if expected_key not in row:
+                row[expected_key] = ''
+    return results
 
 def query_table(
         username: str, password: str,
