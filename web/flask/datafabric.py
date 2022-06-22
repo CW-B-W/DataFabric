@@ -2,9 +2,7 @@
 
 import json
 import sys, os, time
-import random
 import requests
-import pika
 import socket
 
 from DatafabricManager import TableManager
@@ -27,12 +25,10 @@ from DataIntegrationService import DataIntegrationService
 DataIntegrationService.start_monitor_task_status(background=True)
 
 ''' ================ Flask Init ================ '''
-import flask
 from flask import Flask, request, render_template, redirect, url_for
 from flask import render_template
 from flask import session
 from flask_cors import CORS
-#You need to use following line [app Flask(__name__)]
 app = Flask(__name__, template_folder='template')
 class Config(object):
     SECRET_KEY = "cwbw"
@@ -445,3 +441,7 @@ def metadata_scanner_scan():
         return json.dumps(scanned)
     except Exception as e:
         return str(e), 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

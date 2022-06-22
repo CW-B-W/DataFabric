@@ -15,8 +15,6 @@ services:
     networks:
       datafabric_network:
         ipv4_address: 172.22.0.2
-    env_file:
-      - ./web/flask/flask.env
     ports:
       - 5000:5000
     volumes:

@@ -1,5 +1,5 @@
 #!/bin/bash
 set -e
-./run_flask.sh &
+python3 recommender_microservice.py > recommender_microservice.log 2>&1 &
 start-notebook.sh &
 wait

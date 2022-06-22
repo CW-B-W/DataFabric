@@ -1,6 +1,6 @@
 #!/bin/bash
 trap 'kill -s INT $child' EXIT INT TERM
 
-flask run --host 0.0.0.0 > datafabric.log 2>&1 &
+python3 datafabric.py > datafabric.log 2>&1 &
 child=$!
 wait "$child"
