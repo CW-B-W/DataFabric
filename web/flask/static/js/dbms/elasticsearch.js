@@ -1,6 +1,6 @@
 function generateSrcInfo_elk(ip, port, username, password, dbName, tableName, columns, namemapping, startTime, endTime, timeColumn) {
     let srcInfo = {
-        'dbms'        : 'elk',
+        'dbms'        : 'elasticsearch',
         'ip'          : ip,
         'port'        : port,
         'username'    : username,
