@@ -90,17 +90,21 @@ def create_user_admin():
         'username' : f'admin',
         'password' : f'admin',
         'db_account' : {
-            'datafabric-mysql:3306': {
-                'ip': 'datafabric-mysql',
-                'port': '3306',
-                'username': 'root',
-                'password': 'my-secret-pw'
+            'mysql': {
+                'datafabric-mysql:3306': {
+                    'ip': 'datafabric-mysql',
+                    'port': '3306',
+                    'username': 'root',
+                    'password': 'my-secret-pw'
+                }
             },
-            'datafabric-mongo:27017': {
-                'ip': 'datafabric-mongo',
-                'port': '27017',
-                'username': 'root',
-                'password': 'example'
+            'mongodb' : {
+                'datafabric-mongo:27017': {
+                    'ip': 'datafabric-mongo',
+                    'port': '27017',
+                    'username': 'root',
+                    'password': 'example'
+                }
             }
         },
         'data_permission': {
