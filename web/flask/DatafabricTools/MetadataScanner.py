@@ -1,5 +1,6 @@
 from DBMSAccessor import DBMSAccessor
 from DatafabricManager import TableManager
+import traceback
 
 def scan(username: str, password: str, ip: str, port: str, dbms: str, db: str = None, tables: list = None) -> list:
     """Scan all the tables in dbms. Then import result to datafabric.TableInfo
@@ -25,6 +26,7 @@ def scan(username: str, password: str, ip: str, port: str, dbms: str, db: str = 
         try:
             dbs = DBMSAccessor.list_dbs(username, password, ip, port, dbms)
         except:
+            traceback.print_exc()
             return scanned
     else:
         dbs = [db]
@@ -34,6 +36,7 @@ def scan(username: str, password: str, ip: str, port: str, dbms: str, db: str = 
             try:
                 tables = DBMSAccessor.list_tables(username, password, ip, port, dbms, db)
             except:
+                traceback.print_exc()
                 continue
             for table in tables:
                 try:
@@ -47,6 +50,7 @@ def scan(username: str, password: str, ip: str, port: str, dbms: str, db: str = 
                         'Columns' : columns
                     })
                 except:
+                    traceback.print_exc()
                     continue
     else:
         for db in dbs:
@@ -62,6 +66,7 @@ def scan(username: str, password: str, ip: str, port: str, dbms: str, db: str = 
                         'Columns' : columns
                     })
                 except:
+                    traceback.print_exc()
                     continue
     
     return scanned
