@@ -33,6 +33,7 @@ def query_table_hbase(username, password, ip, port, db, table, columns, start_ti
     return my_data
 
 def generate_query(db, table, columns, start_time, end_time, time_column):
+    query = None
     if start_time is not None and end_time is not None and time_column is not None:
         family_qualifier = time_column.split(":")
         query = f"SingleColumnValueFilter('{family_qualifier[0]}', '{family_qualifier[1]}', >=, 'binary:{start_time}') AND SingleColumnValueFilter('{family_qualifier[0]}', '{family_qualifier[1]}', <=, 'binary:{end_time}')"
