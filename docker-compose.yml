@@ -20,9 +20,9 @@ services:
       - ./web/flask/flask_config.json:/flask_config.json
       - ./web/flask/static:/static
       - ./web/flask/template:/template
-      - ./common/InternalDB:/InternalDB
-      - ./common/InternalMQ:/InternalMQ
-      - ./common/DBMSAccessor:/DBMSAccessor
+      - ./web/flask/InternalDB:/InternalDB
+      - ./web/flask/InternalMQ:/InternalMQ
+      - ./web/flask/DBMSAccessor:/DBMSAccessor
       - ./web/flask/DatafabricManager:/DatafabricManager
       - ./web/flask/RecommenderService:/RecommenderService
       - ./web/flask/DataIntegrationService:/DataIntegrationService
@@ -100,7 +100,7 @@ services:
       - ./data_integration/integration_results:/integration_results
       - ./data_integration/data_serving:/data_serving
       - ./data_integration/DataIntegrator:/DataIntegrator
-      - ./common/DBMSAccessor:/DBMSAccessor
+      - ./data_integration/DBMSAccessor:/DBMSAccessor
     networks:
       datafabric_network:
     mem_limit: 4096MB
