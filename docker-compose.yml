@@ -17,7 +17,6 @@ services:
     volumes:
       - ./web/flask/flask-share:/flask-share
       - ./web/flask/datafabric.py:/datafabric.py
-      - ./web/flask/datafabric.log:/datafabric.log
       - ./web/flask/flask_config.json:/flask_config.json
       - ./web/flask/static:/static
       - ./web/flask/template:/template
@@ -73,7 +72,6 @@ services:
       GRANT_SUDO: "yes"
     volumes:
       - ./recommender/recommender_microservice.py:/home/jovyan/recommender_microservice.py
-      - ./recommender/recommender_microservice.log:/home/jovyan/recommender_microservice.log
       - ./recommender/jupyter_work:/home/jovyan/work
     networks:
       datafabric_network:
@@ -97,7 +95,6 @@ services:
       - rabbitmq
     volumes:
       - ./data_integration/microservice.py:/microservice.py
-      - ./data_integration/microservice.log:/microservice.log
       - ./data_integration/task_requests:/task_requests
       - ./data_integration/task_logs:/task_logs
       - ./data_integration/integration_results:/integration_results
