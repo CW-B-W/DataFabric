@@ -63,7 +63,8 @@ def train():
     try:
         conf = pyspark.SparkConf() \
                     .setMaster("local") \
-                    .setAppName("ALS")
+                    .setAppName("ALS") \
+                    .set("spark.default.parallelism", "100")
 
         spark = SparkSession.builder.config(conf=conf).getOrCreate()
 
