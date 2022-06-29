@@ -12,6 +12,9 @@ import json
 from DBMSAccessor import DBMSAccessor
 
 def setup_logging(filename):
+    for handler in logging.getLogger().handlers[:]:
+        logging.getLogger().removeHandler(handler)
+
     save_dir = r'/task_logs/'
     logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - [%(levelname)s]\n%(message)s\n[%(pathname)s %(funcName)s %(lineno)d]\n',
