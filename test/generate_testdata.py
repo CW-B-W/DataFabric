@@ -18,7 +18,7 @@ def new_random_table_info():
     global column_cnt
     table_info = {
         'ID'         : table_info_idx,
-        'Connection' : 'datafabric-mysql:3306',
+        'Connection' : 'datafabric_mysql_1:3306',
         'DBMS'       : 'MySQL',
         'DB'         : 'testdata',
         'TableName'  : f'MyTable{table_info_idx}',
@@ -70,7 +70,7 @@ def new_random_catalog(table_info_list):
 
 def create_testdata_table_random(table_info):
     db_settings = {
-        "host": "datafabric-mysql",
+        "host": "datafabric_mysql_1",
         "port": 3306,
         "user": "root",
         "password": "my-secret-pw",
@@ -118,7 +118,7 @@ def generate_catalogs(n_table, n_catalog):
     print("[Generating catalogs testdata]")
 
     db_settings = {
-        "host": "datafabric-mysql",
+        "host": "datafabric_mysql_1",
         "port": 3306,
         "user": "root",
         "password": "my-secret-pw",
@@ -191,8 +191,8 @@ def new_random_user_info():
         'password' : f'{user_info_idx}',
         'db_account' : {
             'mysql' : {
-                'datafabric-mysql:3306' : {
-                    'ip'       : 'datafabric-mysql',
+                'datafabric_mysql_1:3306' : {
+                    'ip'       : 'datafabric_mysql_1',
                     'port'     : '3306',
                     'username' : 'root',
                     'password' : 'my-secret-pw'
@@ -239,8 +239,8 @@ def generate_users(n_user):
         'password' : f'admin',
         'db_account' : {
             'mysql': {
-                'datafabric-mysql:3306': {
-                    'ip': 'datafabric-mysql',
+                'datafabric_mysql_1:3306': {
+                    'ip': 'datafabric_mysql_1',
                     'port': '3306',
                     'username': 'root',
                     'password': 'my-secret-pw'
@@ -253,8 +253,8 @@ def generate_users(n_user):
                 }
             },
             'mongodb' : {
-                'datafabric-mongo:27017': {
-                    'ip': 'datafabric-mongo',
+                'datafabric_mongo_1:27017': {
+                    'ip': 'datafabric_mongo_1',
                     'port': '27017',
                     'username': 'root',
                     'password': 'example'

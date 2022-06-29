@@ -5,7 +5,7 @@
             "src":[
                 {
                     "dbms":"mysql",
-                    "ip":"datafabric-mysql",
+                    "ip":"datafabric_mysql_1",
                     "port":"3306",
                     "username":"root",
                     "password":"my-secret-pw",
@@ -19,7 +19,7 @@
                 },
                 {
                     "dbms":"mysql",
-                    "ip":"datafabric-mysql",
+                    "ip":"datafabric_mysql_1",
                     "port":"3306",
                     "username":"root",
                     "password":"my-secret-pw",

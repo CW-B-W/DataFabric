@@ -9,7 +9,7 @@ class RabbitMQ:
         while try_times > 0:
             try:
                 credentials = pika.PlainCredentials('guest', 'guest')
-                self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric-rabbitmq', credentials=credentials))
+                self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials))
                 self.__channel = self.__connection.channel()
                 break
             except:

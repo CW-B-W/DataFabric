@@ -3,7 +3,7 @@ import json
 class RedisDB:
     def __init__(self, db):
         self.__redis_db = None
-        self.__host     = 'datafabric-redis'
+        self.__host     = 'datafabric_redis_1'
         self.__port     = 6379
         self.__db       = db
 

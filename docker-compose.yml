@@ -1,11 +1,9 @@
-version: "2"
+version: "3"
 
 services:
   flask:
-    image: datafabric-flask
+    image: datafabric_flask
     build: ./web/flask
-    container_name: datafabric-flask
-    hostname: datafabric-flask
     depends_on:
       - redis
       - mysql
@@ -14,7 +12,6 @@ services:
       - rabbitmq
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.2
     ports:
       - 5000:5000
     volumes:
@@ -36,25 +33,19 @@ services:
   
   redis:
     image: redis:7.0.0
-    container_name: datafabric-redis
-    hostname: datafabric-redis
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.3
     mem_limit: 4096MB
     volumes:
       - ./persistent_storage/redis:/data
 
   mysql:
     image: mysql:8.0.29
-    container_name: datafabric-mysql
-    hostname: datafabric-mysql
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: my-secret-pw
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.4
     volumes:
       - ./persistent_storage/mysql/mysql-data:/var/lib/mysql
       - ./conf/mysql/conf:/etc/mysql/conf.d
@@ -62,24 +53,19 @@ services:
 
   mongo:
     image: mongo:5.0.8
-    container_name: datafabric-mongo
-    hostname: datafabric-mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.5
     volumes:
       - ./persistent_storage/mongo/mongo-data:/data/db
       - ./persistent_storage/mongo/conf:/data/configdb
     mem_limit: 4096MB
 
   recommender:
-    image: datafabric-recommender
+    image: datafabric_recommender
     build: ./recommender
-    container_name: datafabric-recommender
-    hostname: datafabric-recommender
     depends_on:
       - mongo
     user: root
@@ -91,26 +77,22 @@ services:
       - ./recommender/jupyter_work:/home/jovyan/work
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.6
     mem_limit: 4096MB
 
   rabbitmq:
     image: rabbitmq:3.9.10-management
-    container_name: datafabric-rabbitmq
-    hostname: datafabric-rabbitmq
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.7
     volumes:
       - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
     mem_limit: 1024MB
 
   data-integration:
-    image: datafabric-data-integration
+    image: datafabric_data-integration
+    deploy:
+      replicas: 3
     build: ./data_integration
-    container_name: datafabric-data-integration
-    hostname: datafabric-data-integration
     depends_on:
       - rabbitmq
     volumes:
@@ -124,7 +106,6 @@ services:
       - ./common/DBMSAccessor:/DBMSAccessor
     networks:
       datafabric_network:
-        ipv4_address: 172.22.0.8
     mem_limit: 4096MB
 
 networks:

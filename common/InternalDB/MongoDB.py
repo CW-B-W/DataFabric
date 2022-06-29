@@ -7,7 +7,7 @@ class MongoDB:
     def __init__(self, db):
         self.__mongo_client = None
         self.__mongo_db     = None
-        self.__host         = 'datafabric-mongo'
+        self.__host         = 'datafabric_mongo_1'
         self.__username     = 'root'
         self.__password     = 'example'
         self.__db           = db

@@ -352,7 +352,7 @@ def table_preview():
 
 @app.route('/recommender/train')
 def train_recommender():
-    response = requests.get('http://datafabric-recommender:5000/train?' + request.query_string.decode())
+    response = requests.get('http://datafabric_recommender_1:5000/train?' + request.query_string.decode())
     return response.text
 
 @app.route('/data_integration', methods=['GET', 'POST'])
@@ -398,7 +398,7 @@ def data_integration_status():
 @app.route('/data_integration/serving/<serving_name>')
 def data_integration_serving(serving_name):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect_ex(('datafabric-data-integration', 5001))
+    s.connect_ex(('datafabric_data-integration_1', 5001))
     s.send(str.encode(serving_name))
     status = s.recv(2).decode('utf-8')
     if status == 'ok':

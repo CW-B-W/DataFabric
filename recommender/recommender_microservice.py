@@ -46,7 +46,7 @@ def train():
 
     try:
         mongo_client = pymongo.MongoClient(
-                                f'mongodb://root:example@datafabric-mongo',
+                                f'mongodb://root:example@datafabric_mongo_1',
                                 serverSelectionTimeoutMS=3000)
         mongo_db  = mongo_client['datafabric']
         mongo_col = mongo_db['ratings']

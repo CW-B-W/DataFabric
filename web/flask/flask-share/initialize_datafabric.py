@@ -21,7 +21,7 @@ def mysql_connect(db_settings):
 
 def create_mysql_database(db, replace=True):
     db_settings = {
-        "host": "datafabric-mysql",
+        "host": "datafabric_mysql_1",
         "port": 3306,
         "user": "root",
         "password": "my-secret-pw",
@@ -46,7 +46,7 @@ def create_mysql_database(db, replace=True):
 
 def create_mysql_table(db, table, create_sql, replace=True):
     db_settings = {
-        "host": "datafabric-mysql",
+        "host": "datafabric_mysql_1",
         "port": 3306,
         "user": "root",
         "password": "my-secret-pw",
@@ -70,14 +70,14 @@ def create_mysql_table(db, table, create_sql, replace=True):
 
 
 def create_mongo_database(db, replace=True):
-    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric_mongo_1' % ('root', 'example'))
 
     if replace:
         myclient.drop_database(db)
     mydb = myclient[db]
 
 def create_mongo_collection(db, collection, replace=True):
-    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric-mongo' % ('root', 'example'))
+    myclient = pymongo.MongoClient('mongodb://%s:%s@datafabric_mongo_1' % ('root', 'example'))
     mydb = myclient[db]
     if replace:
         if collection in mydb.list_collection_names():
@@ -91,16 +91,16 @@ def create_user_admin():
         'password' : f'admin',
         'db_account' : {
             'mysql': {
-                'datafabric-mysql:3306': {
-                    'ip': 'datafabric-mysql',
+                'datafabric_mysql_1:3306': {
+                    'ip': 'datafabric_mysql_1',
                     'port': '3306',
                     'username': 'root',
                     'password': 'my-secret-pw'
                 }
             },
             'mongodb' : {
-                'datafabric-mongo:27017': {
-                    'ip': 'datafabric-mongo',
+                'datafabric_mongo_1:27017': {
+                    'ip': 'datafabric_mongo_1',
                     'port': '27017',
                     'username': 'root',
                     'password': 'example'

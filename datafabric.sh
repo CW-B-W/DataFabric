@@ -2,17 +2,17 @@
 
 function start_docker_compose() {
     docker network create -d bridge datafabric_network --ipam-driver default --subnet=172.22.0.0/16 || true
-    docker-compose up -d
+    docker-compose --project-name datafabric up -d
 }
 
 function stop_docker_compose() {
-    docker-compose stop -t 300
-    docker-compose down
+    docker-compose --project-name datafabric stop -t 300
+    docker-compose --project-name datafabric down
     docker network rm datafabric_network
 }
 
 function build_dockers() {
-    nohup docker-compose build > $(pwd)/docker-build.log 2>&1 &
+    nohup docker-compose --project-name datafabric build > $(pwd)/docker-build.log 2>&1 &
     chmod a+r $(pwd)/docker-build.log
     tail -f docker-build.log
 }
@@ -30,7 +30,7 @@ function view_docker_logs() {
 }
 
 function flask_cli() {
-    docker exec -it datafabric-flask /bin/bash
+    docker exec -it datafabric_flask_1 /bin/bash
 }
 
 function flask_logs() {
@@ -38,11 +38,11 @@ function flask_logs() {
 }
 
 function mysql_cli() {
-    docker exec -it datafabric-mysql mysql --password=my-secret-pw
+    docker exec -it datafabric_mysql_1 mysql --password=my-secret-pw
 }
 
 function mongo_cli() {
-    docker exec -it datafabric-mongo mongosh --username=root --password=example
+    docker exec -it datafabric_mongo_1 mongosh --username=root --password=example
 }
 
 function generate_test_data() {
@@ -54,7 +54,7 @@ function generate_test_data() {
         gen_rating="-r"
     fi
     echo "Start generating testdata..."
-    docker exec -it datafabric-flask python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
+    docker exec -it datafabric_flask_1 python3 /test/generate_testdata.py -t $1 -c $2 -u $3 $gen_rating
     echo "Start training initial recommender..."
     train_recommender
 
@@ -63,25 +63,25 @@ function generate_test_data() {
 }
 
 function restart_flask() {
-    docker-compose stop -t 300 flask
-    docker-compose up -d flask
+    docker-compose --project-name datafabric stop -t 300 flask
+    docker-compose --project-name datafabric up -d flask
 }
 
 function initialize_datafabric() {
     docker network create --driver=bridge --subnet=172.22.0.0/24 datafabric_network
 
     echo -e "Starting internal databases..."
-    docker-compose run -d --rm --no-deps mysql
-    docker-compose run -d --rm --no-deps mongo
+    docker-compose run --name datafabric_mysql_1  -d --rm --no-deps mysql
+    docker-compose run --name datafabric_mongo_1 -d --rm --no-deps mongo
 
     echo -e "Initializing Datafabric metadata..."
-    docker-compose run --rm --no-deps flask python3 /flask-share/initialize_datafabric.py
+    docker-compose run --name datafabric_flask_1 --rm --no-deps flask python3 /flask-share/initialize_datafabric.py
 
     stop_docker_compose
 }
 
 function train_recommender() {
-    docker exec -it datafabric-flask curl http://datafabric-recommender:5000/train?implicit_pref=True
+    docker exec -it datafabric_flask_1 curl http://datafabric_recommender_1:5000/train?implicit_pref=True
 }
 
 function print_help() {
@@ -93,8 +93,8 @@ function print_help() {
     echo -e "\t./datafabric.sh restart"
     echo -e "\t./datafabric.sh build"
     echo -e "\t./datafabric.sh build-log"
-    echo -e "\t./datafabric.sh bash datafabric-flask"
-    echo -e "\t./datafabric.sh logs datafabric-flask"
+    echo -e "\t./datafabric.sh bash datafabric_flask_1"
+    echo -e "\t./datafabric.sh logs datafabric_flask_1"
     echo -e "\t./datafabric.sh flask-cli"
     echo -e "\t./datafabric.sh mysql"
     echo -e "\t./datafabric.sh mongo"

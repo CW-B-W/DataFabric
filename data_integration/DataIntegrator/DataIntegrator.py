@@ -52,7 +52,7 @@ TASKSTATUS_UNKNOWN    = 6
 def send_task_status(task_id, status, message):
     credentials = pika.PlainCredentials('guest', 'guest')
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='datafabric-rabbitmq', credentials=credentials))
+        pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials))
     channel = connection.channel()
 
     channel.queue_declare(queue='task_status')

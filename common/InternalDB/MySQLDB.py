@@ -5,7 +5,7 @@ class MySQLDB:
         self.__mysql_pool    = None
         self.__mysql_conn_db = db
         self.__mysql_conn    = {
-            "host": "datafabric-mysql",
+            "host": "datafabric_mysql_1",
             "port": 3306,
             "user": "root",
             "password": "my-secret-pw",
