@@ -140,7 +140,7 @@ def search():
         if search_text == '':
             return json.dumps([])
 
-        query_id = f"user={session['user_id']}&search={search_text}&page={page_base+1}~{page_base+5}"
+        query_id = f"flask/user={session['user_id']}&search={search_text}&page={page_base+1}~{page_base+5}"
         result = cache_db.get_json(query_id)
         if result is None:
             result = SearchEngine.search(search_text, page_base, 50)
@@ -160,7 +160,7 @@ def recommend():
         return redirect(url_for('login'))
 
     try:
-        # query_id = f"user={session['user_id']}&recommend=random"
+        # query_id = f"flask/user={session['user_id']}&recommend=random"
         # result = cache_db.get_json(query_id)
         # if result is None:
         #     result = RecommenderService.recommend(session['user_id'])

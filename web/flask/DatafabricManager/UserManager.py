@@ -1,7 +1,8 @@
 from InternalDB.MongoDB import MongoDB
+from InternalDB.RedisDB import RedisDB
 
-mongodb = MongoDB('datafabric')
-user_info_cache = {} # user_info_cache[user_id(int)] = user_info
+mongodb  = MongoDB('datafabric')
+cache_db = RedisDB(db=0)
 
 def login(username: str, password: str) -> int:
     """Try to login and return user_id if login is valid
@@ -16,8 +17,8 @@ def login(username: str, password: str) -> int:
     result = mongodb.query('user_info', {"username": {"$eq": username}})
     try:
         if result[0]['password'] == password:
-            result = MongoDB.parse_bson(result[0]) # To make sure it's serializable
-            user_info_cache[result['id']] = result
+            result   = MongoDB.parse_bson(result[0]) # To make sure it's serializable
+            cache_db.set_json(f'UserManager/user_info/{result["id"]}', result)
             return result['id']
         else:
             return -1
@@ -33,13 +34,13 @@ def get_user_info(user_id: int) -> dict:
     Returns:
         dict: user_info if exists, otherwise None.
     """
-    if user_id in user_info_cache:
-        return user_info_cache[user_id]
-    else:
+    user_info = cache_db.get_json(f'UserManager/user_info/{user_id}')
+    if user_info is None:
         result = mongodb.query('user_info', {"id": {"$eq": user_id}})
         result = MongoDB.parse_bson(result[0]) # To make sure it's serializable
-        user_info_cache[result['id']] = result
-        return result
+        cache_db.set_json(f'UserManager/user_info/{result["id"]}', result)
+        user_info = result
+    return user_info
 
 def set_user_info(user_id: int, user_info: dict):
     mongodb.update(
