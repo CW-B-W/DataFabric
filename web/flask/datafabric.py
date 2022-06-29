@@ -140,8 +140,13 @@ def search():
         if search_text == '':
             return json.dumps([])
 
+        use_cache = request.args.get('cache', default='True', type=str)
+        use_cache = use_cache.lower()
         query_id = f"flask/user={session['user_id']}&search={search_text}&page={page_base+1}~{page_base+5}"
-        result = cache_db.get_json(query_id)
+        if use_cache == 'true':
+            result = cache_db.get_json(query_id)
+        else:
+            result = None
         if result is None:
             result = SearchEngine.search(search_text, page_base, 50)
             cache_db.set_json(query_id, result, 15*60)

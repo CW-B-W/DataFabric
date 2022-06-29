@@ -3,6 +3,8 @@ version: "3"
 services:
   flask:
     image: datafabric_flask
+    environment:
+      - N_WORKERS=16
     build: ./web/flask
     depends_on:
       - redis
@@ -28,7 +30,7 @@ services:
       - ./web/flask/DataIntegrationService:/DataIntegrationService
       - ./web/flask/DatafabricTools:/DatafabricTools
       - ./test:/test
-    mem_limit: 4096MB
+    mem_limit: 8192MB
   
   redis:
     image: redis:7.0.0
