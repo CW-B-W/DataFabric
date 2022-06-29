@@ -1,1 +1,1 @@
-docker build --tag datafabric_flask_1 .
+docker build --tag datafabric_flask .
