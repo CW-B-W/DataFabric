@@ -71,11 +71,11 @@ function initialize_datafabric() {
     docker network create --driver=bridge --subnet=172.22.0.0/24 datafabric_network
 
     echo -e "Starting internal databases..."
-    docker-compose run --name datafabric_mysql_1  -d --rm --no-deps mysql
-    docker-compose run --name datafabric_mongo_1 -d --rm --no-deps mongo
+    docker-compose --project-name datafabric run --name datafabric_mysql_1  -d --rm --no-deps mysql
+    docker-compose --project-name datafabric run --name datafabric_mongo_1 -d --rm --no-deps mongo
 
     echo -e "Initializing Datafabric metadata..."
-    docker-compose run --name datafabric_flask_1 --rm --no-deps flask python3 /flask-share/initialize_datafabric.py
+    docker-compose --project-name datafabric run --name datafabric_flask_1 --rm --no-deps flask python3 /flask-share/initialize_datafabric.py
 
     stop_docker_compose
 }
