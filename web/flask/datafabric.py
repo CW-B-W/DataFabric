@@ -447,6 +447,9 @@ def metadata_scanner_scan():
     except Exception as e:
         return str(e), 500
 
+@app.route('/whoami')
+def whoami():
+    return socket.gethostname()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=False)

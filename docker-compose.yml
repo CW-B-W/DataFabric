@@ -1,8 +1,22 @@
 version: "3"
 
 services:
+  nginx:
+    image: nginx:1.23.0
+    depends_on:
+      - flask
+    networks:
+      datafabric_network:
+    ports:
+      - 5000:80
+    volumes:
+      - ./conf/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    mem_limit: 8192MB
+
   flask:
     image: datafabric_flask
+    deploy:
+      replicas: 3
     environment:
       - N_WORKERS=16
     build: ./web/flask
@@ -14,8 +28,6 @@ services:
       - rabbitmq
     networks:
       datafabric_network:
-    ports:
-      - 5000:5000
     volumes:
       - ./web/flask/flask-share:/flask-share
       - ./web/flask/datafabric.py:/datafabric.py
