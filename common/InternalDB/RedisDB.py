@@ -34,3 +34,14 @@ class RedisDB:
             return json.loads(self.__redis_db.get(key).decode('utf-8'))
         else:
             return None
+
+    def exists_key(self, key: str) -> int:
+        try:
+            return self.__redis_db.exists(key)
+        except:
+            return 0
+    def delete_key(self, key: str) -> int:
+        try:
+            return self.__redis_db.delete(key)
+        except:
+            return 0

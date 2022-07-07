@@ -8,6 +8,8 @@ task_status_mq = RabbitMQ('task_status')
 cache_db       = RedisDB(db=0)
 
 def send_task(task_info: dict):
+    task_id = str(task_info['task_id'])
+    cache_db.delete_key(f'DataIntegrationService/task_status/{task_id}')
     task_req_mq.send_dict(task_info)
 
 monitor_thread = None
