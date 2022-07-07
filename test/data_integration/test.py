@@ -51,7 +51,7 @@ def main():
     task_end_time = [None for i in range(n_tasks)]
     task_status   = [False for i in range(n_tasks)]
     for i in range(n_tasks):
-        task_info['task_id'] = f'StressTest_{i}'
+        task_info['task_id'] = f'StressTest_{filepath}_{i}'
         task_id_list[i]  = send_task(task_info)
         task_req_time[i] = time.time()
 
