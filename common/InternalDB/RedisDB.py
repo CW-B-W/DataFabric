@@ -1,5 +1,7 @@
 import redis
 import json
+import time
+
 class RedisDB:
     def __init__(self, db):
         self.__redis_db = None
@@ -18,6 +20,8 @@ class RedisDB:
                 if retry == 0:
                     raise ex
                 retry -= 1
+                print("[RedisDB] Connection failed. Retry in 3 seconds")
+                time.sleep(3)
         return False
 
     def set_json(self, key: str, obj: dict, expire: int = None) -> bool:

@@ -1,5 +1,7 @@
 import pymysql
 from pymysqlpool.pool import Pool
+import time
+
 class MySQLDB:
     def __init__(self, db: str):
         self.__mysql_pool    = None
@@ -33,6 +35,8 @@ class MySQLDB:
                 if retry == 0:
                     raise ex
                 retry -= 1
+                print("[MySQLDB] Connection failed. Retry in 3 seconds")
+                time.sleep(3)
         return False
 
     def query(self, query: str) -> bool:

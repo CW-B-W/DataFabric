@@ -2,6 +2,7 @@ import pymongo
 from bson import json_util
 from bson.objectid import ObjectId
 import json
+import time
 
 class MongoDB:
     def __init__(self, db):
@@ -29,6 +30,8 @@ class MongoDB:
                 if retry == 0:
                     raise ex
                 retry -= 1
+                print("[MongoDB] Connection failed. Retry in 3 seconds")
+                time.sleep(3)
         return False
     
     def query(self, collection_name: str, query: dict = {}, filter: dict = {}) -> dict:

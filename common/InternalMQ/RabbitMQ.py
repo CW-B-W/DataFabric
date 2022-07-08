@@ -12,11 +12,13 @@ class RabbitMQ:
                 self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
                 self.__channel = self.__connection.channel()
                 break
-            except:
+            except Exception as ex:
                 try_times -= 1
                 if try_times >= 1:
-                    print("Connection failed. Retry in 3 seconds")
+                    print("[RabbitMQ] Connection failed. Retry in 3 seconds")
                     time.sleep(3)
+                else:
+                    raise ex
 
         self.__channel.queue_declare(queue=self.__queue)
     
