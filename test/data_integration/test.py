@@ -4,9 +4,13 @@ import requests
 import time
 
 def send_task(task_info: dict) -> str:
-    resp = requests.post('http://192.168.103.48:5000/data_integration', data=json.dumps(task_info))
-    task_id = resp.text
-    return task_id
+    try:
+        resp = requests.post('http://127.0.0.1:5000/data_integration', data=json.dumps(task_info), timeout=30)
+        task_id = resp.text
+        return task_id
+    except Exception as e:
+        print(f"{task_info['task_id']} request failed")
+        return ''
 
 prev_status = {}
 def check_task_status(task_id: str) -> bool:
@@ -16,8 +20,8 @@ def check_task_status(task_id: str) -> bool:
     # TASKSTATUS_FAILED     = 4
     # TASKSTATUS_ERROR      = 5
     # TASKSTATUS_UNKNOWN    = 6
-    resp = requests.get(f'http://192.168.103.48:5000/data_integration/status?task_id={task_id}')
     try:
+        resp = requests.get(f'http://127.0.0.1:5000/data_integration/status?task_id={task_id}', timeout=30)
         task_status = json.loads(resp.text)
         if task_id in prev_status:
             if task_status != prev_status[task_id]:
@@ -60,11 +64,15 @@ def main():
             if task_status[i] == True:
                 continue
             task_id = task_id_list[i]
-            status = check_task_status(task_id)
-            if status == True:
+            if task_id != '':
+                status = check_task_status(task_id)
+                if status == True:
+                    task_status[i]   = True
+                    task_end_time[i] = time.time()
+                    print(f'Task {task_id} finished!')
+            else:
                 task_status[i]   = True
-                task_end_time[i] = time.time()
-                print(f'Task {task_id} finished!')
+                task_end_time[i] = task_req_time[i]
         time.sleep(0.2)
     
     print("All Finished!")
