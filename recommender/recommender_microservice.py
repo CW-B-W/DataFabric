@@ -64,7 +64,8 @@ def train():
         conf = pyspark.SparkConf() \
                     .setMaster("local") \
                     .setAppName("ALS") \
-                    .set("spark.default.parallelism", "100")
+                    .set("spark.default.parallelism", "100") \
+                    .set("spark.driver.memory", "30g")
 
         spark = SparkSession.builder.config(conf=conf).getOrCreate()
         os.makedirs('checkpoint/', exist_ok=True)
