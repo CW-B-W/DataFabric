@@ -44,7 +44,8 @@ def setup_logging(filename):
 
 
 ''' ========== RabbitMQ ========== '''
-import pika, sys
+from InternalMQ.RabbitMQ import RabbitMQ
+task_status_mq = RabbitMQ('task_status')
 
 TASKSTATUS_ACCEPTED   = 1
 TASKSTATUS_PROCESSING = 2
@@ -52,23 +53,14 @@ TASKSTATUS_SUCCEEDED  = 3
 TASKSTATUS_FAILED     = 4
 TASKSTATUS_ERROR      = 5
 TASKSTATUS_UNKNOWN    = 6
-def send_task_status(task_id, status, message):
-    credentials = pika.PlainCredentials('guest', 'guest')
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='task_status')
-
+def send_task_status(task_id, status, message, retry=2):
     payload = {
         'task_id': task_id,
         'status':  status,
         'message': message
     }
-    body = json.dumps(payload)
-
-    channel.basic_publish(exchange='', routing_key='task_status', body=body)
-    connection.close()
+    if task_status_mq.send_dict(payload, retry) == False:
+        raise Exception("Failed to send message to MQ.")
 ''' ========== RabbitMQ ========== '''
 
 
@@ -182,15 +174,23 @@ def integrate(task_dict: dict):
 
     # ========== After all pipeline tasks are finished ==========
 
-    if df_joined.empty:
-        logging.error("The joined table is empty.")
-        send_task_status(task_id, TASKSTATUS_FAILED, "The joined table is empty.")
+    try:
+        if df_joined.empty:
+            logging.error("The joined table is empty.")
+            send_task_status(task_id, TASKSTATUS_FAILED, "The joined table is empty.")
+            return 1
+
+        df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
+        if 'serve_as' in task_info['results']:
+            df_joined.to_csv(f"/data_serving/{task_info['results']['serve_as']}", index=False, header=True)
+
+        logging.info("Job finished")
+        send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")
+        return 0
+    except Exception as e:
+        logging.error("Error in finalizing." + str(e))
+        send_task_status(task_id, TASKSTATUS_FAILED, "Error in finalizing." + str(e))
         return 1
 
-    df_joined.to_csv('/integration_results/' + task_id + '_' + ts + '.csv', index=False, header=True)
-    if 'serve_as' in task_info['results']:
-        df_joined.to_csv(f"/data_serving/{task_info['results']['serve_as']}", index=False, header=True)
-
-    logging.info("Job finished")
-    send_task_status(task_id, TASKSTATUS_SUCCEEDED, "Job finished.")
-    return 0
+    return 1
+    

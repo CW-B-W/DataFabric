@@ -43,7 +43,8 @@ def main():
             connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
             channel = connection.channel()
             break
-        except:
+        except Exception as e:
+            print(e)
             try_times -= 1
             if try_times >= 1:
                 print("Connection failed. Retry in 3 seconds")
@@ -53,11 +54,16 @@ def main():
 
     def callback(ch, method, properties, body):
         body = urllib.parse.unquote(body.decode('utf-8'))
-        try:
-            task_dict = json.loads(body)
-            DataIntegrator.integrate(task_dict)
-        except:
-            pass
+        onfailed_retry = 2
+        while onfailed_retry >= 0:
+            try:
+                task_dict = json.loads(body)
+                DataIntegrator.integrate(task_dict)
+                break
+            except:
+                onfailed_retry -= 1
+                if onfailed_retry < 0:
+                    break
 
     channel.basic_consume(queue='task_req', on_message_callback=callback, auto_ack=True)
 

@@ -99,6 +99,8 @@ services:
       - ./conf/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
       - ./persistent_storage/rabbitmq:/var/lib/rabbitmq
     mem_limit: 1024MB
+    ports:
+      - 15672:15672
 
   data-integration:
     image: datafabric_data-integration
@@ -115,6 +117,7 @@ services:
       - ./data_integration/data_serving:/data_serving
       - ./data_integration/DataIntegrator:/DataIntegrator
       - ./data_integration/DBMSAccessor:/DBMSAccessor
+      - ./data_integration/InternalMQ:/InternalMQ
     networks:
       datafabric_network:
     mem_limit: 4096MB

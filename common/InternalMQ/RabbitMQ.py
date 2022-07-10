@@ -11,6 +11,7 @@ class RabbitMQ:
                 credentials = pika.PlainCredentials('guest', 'guest')
                 self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
                 self.__channel = self.__connection.channel()
+                self.__channel.confirm_delivery()
                 break
             except Exception as ex:
                 try_times -= 1
@@ -22,15 +23,36 @@ class RabbitMQ:
 
         self.__channel.queue_declare(queue=self.__queue)
     
-    def send_dict(self, d: dict):
-        self.__channel.basic_publish(
-            exchange='', routing_key=self.__queue, body=json.dumps(d), 
-            properties=pika.BasicProperties(delivery_mode = 2)) # make message persistent
+    def send_dict(self, d: dict, retry=2):
+        while retry >= 0:
+            try:
+                self.__channel.basic_publish(
+                    exchange='', routing_key=self.__queue, body=json.dumps(d), 
+                    properties=pika.BasicProperties(delivery_mode = 2), mandatory=True) # make message persistent
+                return True
+            except Exception as e:
+                pass
+
+            retry -= 1
+            time.sleep(0.1)
+
+        return False
 
     def send_str(self, s: str):
-        self.__channel.basic_publish(
-            exchange='', routing_key=self.__queue, body=s, 
-            properties=pika.BasicProperties(delivery_mode = 2)) # make message persistent
+        while retry >= 0:
+            try:
+                self.__channel.basic_publish(
+                    exchange='', routing_key=self.__queue, body=s, 
+                    properties=pika.BasicProperties(delivery_mode = 2), mandatory=True) # make message persistent
+                return True
+            except Exception as e:
+                pass
+
+            retry -= 1
+            time.sleep(0.1)
+            
+        return False
+        
 
     def listen(self, callback: callable):
         self.__channel.basic_consume(queue=self.__queue, on_message_callback=callback, auto_ack=True)
