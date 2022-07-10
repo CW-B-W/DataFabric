@@ -67,6 +67,8 @@ def train():
                     .set("spark.default.parallelism", "100")
 
         spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        os.makedirs('checkpoint/', exist_ok=True)
+        spark.sparkContext.setCheckpointDir('checkpoint/')
 
         df = spark.createDataFrame(
             rating_list,
