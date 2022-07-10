@@ -84,6 +84,10 @@ function train_recommender() {
     docker exec -it datafabric_flask_1 curl http://datafabric_recommender_1:5000/train?implicit_pref=True
 }
 
+function debug_bash() {
+    sudo docker-compose --project-name datafabric run $1 /bin/bash
+}
+
 function print_help() {
     echo -e "Usage example:"
     echo -e "\t./datafabric.sh help"
@@ -100,6 +104,7 @@ function print_help() {
     echo -e "\t./datafabric.sh mongo"
     echo -e "\t./datafabric.sh generate_testdata 1000 200 50 1"
     echo -e "\t./datafabric.sh train_recommender"
+    echo -e "\t./datafabric.sh debug-bash"
 }
 
 if [[ "$1" == "help" ]]; then
@@ -142,6 +147,8 @@ elif [[ "$1" == "initialize" ]]; then
     initialize_datafabric
 elif [[ "$1" == "train_recommender" ]]; then
     train_recommender
+elif [[ "$1" == "debug-bash" ]]; then
+    debug_bash $2
 else
     print_help
 fi
