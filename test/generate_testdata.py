@@ -299,16 +299,16 @@ def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
 def generate_ratings(user_info_list, catalog_list):
     user_rating_list = []
 
-    for user in user_info_list:
+    for user in tqdm(user_info_list):
         user_rating_list.append(new_random_rating(user, catalog_list))
     
-    for rating in user_rating_list:
+    for rating in tqdm(user_rating_list):
         for key in rating['catalog_ratings']:
             catalog_id = int(key)
             score      = float(rating['catalog_ratings'][key])
             UserManager.set_rating(rating['user'], catalog_id, score)
 
-    for user in user_info_list:
+    for user in tqdm(user_info_list):
         for catalog in catalog_list:
             UserManager.set_viewcount(int(user['id']), int(catalog['ID']), random.randint(0, 10))
 
