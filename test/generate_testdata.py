@@ -6,6 +6,7 @@ import pymongo
 import argparse
 from tqdm import tqdm
 import time
+import math
 
 from DatafabricManager import TableManager
 from DatafabricManager import CatalogManager
@@ -282,7 +283,7 @@ def generate_users(n_user):
 
     return user_info_list
 
-def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
+def new_random_rating(user, catalog_list, rate_ratio=1.0/1000.0):
     rating = {
         'user' : user['id'],
         'catalog_ratings' : {
@@ -299,18 +300,21 @@ def new_random_rating(user, catalog_list, rate_ratio=1.0/5.0):
 def generate_ratings(user_info_list, catalog_list):
     user_rating_list = []
 
+    rate_ratio = math.pow(len(catalog_list), 0.4) / len(catalog_list)
     for user in tqdm(user_info_list):
-        user_rating_list.append(new_random_rating(user, catalog_list))
+        user_rating_list.append(new_random_rating(user, catalog_list, rate_ratio))
     
     for rating in tqdm(user_rating_list):
         for key in rating['catalog_ratings']:
             catalog_id = int(key)
             score      = float(rating['catalog_ratings'][key])
             UserManager.set_rating(rating['user'], catalog_id, score)
+            UserManager.set_viewcount(rating['user'], catalog_id, random.randint(1, 100))
 
     for user in tqdm(user_info_list):
-        for catalog in catalog_list:
-            UserManager.set_viewcount(int(user['id']), int(catalog['ID']), random.randint(0, 10))
+        sampled_catalogs = random.sample(catalog_list, 2*random.randint(1, int(len(catalog_list)*rate_ratio)))
+        for catalog in sampled_catalogs:
+            UserManager.set_viewcount(int(user['id']), int(catalog['ID']), random.randint(1, 100))
 
     print("Finished!")
 
