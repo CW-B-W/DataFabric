@@ -3,12 +3,14 @@ from bson import json_util
 from bson.objectid import ObjectId
 import json
 import time
+import os
 
 class MongoDB:
     def __init__(self, db):
         self.__mongo_client = None
         self.__mongo_db     = None
-        self.__host         = 'datafabric_mongo_1'
+        self.__host         = os.environ["MONGODB_HOST"]
+        self.__port         = int(os.environ["MONGODB_PORT"])
         self.__username     = 'root'
         self.__password     = 'example'
         self.__db           = db
@@ -19,7 +21,7 @@ class MongoDB:
         while retry >= 0:
             try:
                 mongo_client = pymongo.MongoClient(
-                        f'mongodb://{self.__username}:{self.__password}@{self.__host}',
+                        f'mongodb://{self.__username}:{self.__password}@{self.__host}:{self.__port}',
                         serverSelectionTimeoutMS=3000)
                 mongo_client.server_info()
                 mongo_db = mongo_client[self.__db]

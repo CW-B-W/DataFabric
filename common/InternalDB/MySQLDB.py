@@ -1,14 +1,15 @@
 import pymysql
 from pymysqlpool.pool import Pool
 import time
+import os
 
 class MySQLDB:
     def __init__(self, db: str):
         self.__mysql_pool    = None
         self.__mysql_conn_db = db
         self.__mysql_conn    = {
-            "host": "datafabric_mysql_1",
-            "port": 3306,
+            "host": os.environ["MYSQL_HOST"],
+            "port": int(os.environ["MYSQL_PORT"]),
             "user": "root",
             "password": "my-secret-pw",
             "charset": "utf8"

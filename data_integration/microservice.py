@@ -40,7 +40,7 @@ def main():
     while try_times > 0:
         try:
             credentials = pika.PlainCredentials('guest', 'guest')
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
+            connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ["RABBITMQ_HOST"], port=int(os.environ["RABBITMQ_PORT"]), credentials=credentials, heartbeat=0))
             channel = connection.channel()
             break
         except Exception as e:

@@ -1,12 +1,13 @@
 import redis
 import json
 import time
+import os
 
 class RedisDB:
     def __init__(self, db):
         self.__redis_db = None
-        self.__host     = 'datafabric_redis_1'
-        self.__port     = 6379
+        self.__host     = os.environ["REDIS_HOST"]
+        self.__port     = int(os.environ["REDIS_PORT"])
         self.__db       = db
 
     def __connect_redis(self, retry=3) -> bool:

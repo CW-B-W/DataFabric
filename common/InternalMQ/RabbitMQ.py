@@ -1,6 +1,7 @@
 import pika
 import time
 import json
+import os
 
 class RabbitMQ:
     def __init__(self, queue):
@@ -9,7 +10,7 @@ class RabbitMQ:
         while try_times > 0:
             try:
                 credentials = pika.PlainCredentials('guest', 'guest')
-                self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host='datafabric_rabbitmq_1', credentials=credentials, heartbeat=0))
+                self.__connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ["RABBITMQ_HOST"], port=int(os.environ["RABBITMQ_PORT"]), credentials=credentials, heartbeat=0))
                 self.__channel = self.__connection.channel()
                 self.__channel.confirm_delivery()
                 break
