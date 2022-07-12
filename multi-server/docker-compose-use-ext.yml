@@ -3,8 +3,6 @@ version: "3"
 services:
   flask:
     image: datafabric_flask
-    deploy:
-      replicas: 3
     environment:
       - N_WORKERS=16
       - MYSQL_HOST=192.168.103.56
