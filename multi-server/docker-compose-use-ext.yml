@@ -17,11 +17,7 @@ services:
       - RABBITMQ_PORT=5672
     build: ./web/flask
     depends_on:
-      - redis
-      - mysql
-      - mongo
       - recommender
-      - rabbitmq
     networks:
       datafabric_network:
     volumes:
@@ -45,8 +41,6 @@ services:
   recommender:
     image: datafabric_recommender
     build: ./recommender
-    depends_on:
-      - mongo
     user: root
     environment:
       - GRANT_SUDO=yes
@@ -70,8 +64,6 @@ services:
     deploy:
       replicas: 3
     build: ./data_integration
-    depends_on:
-      - rabbitmq
     environment:
       - MYSQL_HOST=192.168.103.56
       - MYSQL_PORT=3306
