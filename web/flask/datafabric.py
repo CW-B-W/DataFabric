@@ -43,7 +43,8 @@ def validate_user() -> bool:
     if 'user_id' in session:
         return True
     else:
-        return False
+        session['user_id'] = 0
+        return True
 
 def validate_permission(action_info: dict) -> bool:
     '''
