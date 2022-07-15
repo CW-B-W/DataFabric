@@ -72,6 +72,7 @@ def query_by_mongoid(obj: dict) -> dict:
     return {'_id':_id}
 
 def writeback_user_info(user_info: dict):
+    cache_db.set_json(f'UserManager/user_info/{user_info["id"]}', user_info)
     mongodb.update(
         'user_info',
         query_by_mongoid(user_info),
